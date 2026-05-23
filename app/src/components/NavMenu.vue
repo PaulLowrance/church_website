@@ -76,8 +76,7 @@ function logout() {
         <q-btn
           flat
           dense
-          class="text-white"
-          :class="{ 'bg-white text-primary': currentRouteName === 'home' }"
+          :class="currentRouteName === 'home' ? 'bg-white text-dark' : 'text-white'"
           @click="goHome"
           aria-label="Home"
         >
@@ -88,8 +87,8 @@ function logout() {
           :key="item.slug"
           flat
           dense
-          class="text-white q-ml-sm"
-          :class="{ 'bg-white text-primary': route.params.slug === item.slug }"
+          class="q-ml-sm"
+          :class="route.params.slug === item.slug ? 'bg-white text-dark' : 'text-white'"
           @click="goToPage(item.slug)"
           :aria-label="item.navTitle"
           :aria-current="route.params.slug === item.slug ? 'page' : undefined"
@@ -100,8 +99,8 @@ function logout() {
           v-if="authStore.userRole === 'Admin'"
           flat
           dense
-          class="text-white q-ml-sm"
-          :class="{ 'bg-white text-primary': currentRouteName === 'admin' }"
+          class="q-ml-sm"
+          :class="currentRouteName === 'admin' ? 'bg-white text-dark' : 'text-white'"
           @click="goAdmin"
           aria-label="Admin Dashboard"
         >
@@ -121,8 +120,8 @@ function logout() {
           v-else
           flat
           dense
-          class="text-white q-ml-sm"
-          :class="{ 'bg-white text-primary': currentRouteName === 'login' }"
+          class="q-ml-sm"
+          :class="currentRouteName === 'login' ? 'bg-white text-dark' : 'text-white'"
           @click="goLogin"
           aria-label="Log in"
         >
