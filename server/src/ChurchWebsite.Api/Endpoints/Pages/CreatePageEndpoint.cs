@@ -11,6 +11,7 @@ public class CreatePageRequest
     public string Title { get; set; } = string.Empty;
     public string Body { get; set; } = string.Empty;
     public bool IsMarkdown { get; set; }
+    public bool IsPublished { get; set; }
 }
 
 public class CreatePageResponse
@@ -68,6 +69,7 @@ public class CreatePageEndpoint(IPageRepository pageRepo) : Endpoint<CreatePageR
             Title = req.Title.Trim(),
             Body = req.Body,
             IsMarkdown = req.IsMarkdown,
+            IsPublished = req.IsPublished,
             UpdatedAt = DateTime.UtcNow
         };
 

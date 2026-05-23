@@ -7,5 +7,6 @@ public class Page
     public string Title { get; set; } = string.Empty;
     public string Body { get; set; } = string.Empty;
     public bool IsMarkdown { get; set; }
+    public bool IsPublished { get; set; } = true;
     public DateTime UpdatedAt { get; set; }
 }

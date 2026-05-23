@@ -10,6 +10,7 @@ public class UpdatePageRequest
     public string Title { get; set; } = string.Empty;
     public string Body { get; set; } = string.Empty;
     public bool IsMarkdown { get; set; }
+    public bool IsPublished { get; set; }
 }
 
 public class UpdatePageResponse
@@ -18,6 +19,7 @@ public class UpdatePageResponse
     public string Title { get; set; } = string.Empty;
     public string Body { get; set; } = string.Empty;
     public bool IsMarkdown { get; set; }
+    public bool IsPublished { get; set; }
 }
 
 public class UpdatePageEndpoint(IPageRepository pageRepo) : Endpoint<UpdatePageRequest, UpdatePageResponse>
@@ -40,6 +42,7 @@ public class UpdatePageEndpoint(IPageRepository pageRepo) : Endpoint<UpdatePageR
         existing.Title = req.Title;
         existing.Body = req.Body;
         existing.IsMarkdown = req.IsMarkdown;
+        existing.IsPublished = req.IsPublished;
         existing.UpdatedAt = DateTime.UtcNow;
 
         await pageRepo.UpdateAsync(existing);
@@ -49,7 +52,8 @@ public class UpdatePageEndpoint(IPageRepository pageRepo) : Endpoint<UpdatePageR
             Slug = existing.Slug,
             Title = existing.Title,
             Body = existing.Body,
-            IsMarkdown = existing.IsMarkdown
+            IsMarkdown = existing.IsMarkdown,
+            IsPublished = existing.IsPublished
         }, cancellation: ct);
     }
 }
