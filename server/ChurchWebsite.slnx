@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ChurchWebsite.Api/ChurchWebsite.Api.csproj" />
+    <Project Path="src/ChurchWebsite.Core/ChurchWebsite.Core.csproj" />
+    <Project Path="src/ChurchWebsite.Infrastructure/ChurchWebsite.Infrastructure.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,22 @@
+# Backend build artifacts
+**/bin/
+**/obj/
+
+# Frontend
+app/node_modules/
+app/dist/
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS
+.DS_Store
+
+# Logs
+*.log
