@@ -11,6 +11,7 @@ const slug = route.params.slug as string
 const title = ref('')
 const body = ref('')
 const isMarkdown = ref(false)
+const isPublished = ref(false)
 const loading = ref(false)
 const saving = ref(false)
 const error = ref('')
@@ -29,6 +30,7 @@ onMounted(async () => {
     title.value = response.data.title
     body.value = response.data.body
     isMarkdown.value = response.data.isMarkdown
+    isPublished.value = response.data.isPublished
   } catch (err) {
     error.value = 'Failed to load page content'
     console.error(err)
@@ -45,7 +47,8 @@ async function savePage() {
       slug,
       title: title.value,
       body: body.value,
-      isMarkdown: isMarkdown.value
+      isMarkdown: isMarkdown.value,
+      isPublished: isPublished.value
     })
     router.push('/admin')
   } catch (err) {
@@ -83,6 +86,13 @@ function goBack() {
           <q-toggle
             v-model="isMarkdown"
             label="Use Markdown"
+            class="q-mb-md"
+          />
+
+          <q-toggle
+            v-model="isPublished"
+            label="Publish Page"
+            color="positive"
             class="q-mb-md"
           />
 

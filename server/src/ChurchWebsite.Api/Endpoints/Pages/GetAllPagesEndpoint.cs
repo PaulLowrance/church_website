@@ -9,6 +9,7 @@ public class PageListItem
     public string Slug { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
     public bool IsMarkdown { get; set; }
+    public bool IsPublished { get; set; }
 }
 
 public class GetAllPagesEndpoint(IPageRepository pageRepo) : EndpointWithoutRequest<IEnumerable<PageListItem>>
@@ -16,7 +17,7 @@ public class GetAllPagesEndpoint(IPageRepository pageRepo) : EndpointWithoutRequ
     public override void Configure()
     {
         Get("/api/pages");
-        AllowAnonymous();
+        Roles("Admin");
     }
 
     public override async Task HandleAsync(CancellationToken ct)
@@ -26,7 +27,8 @@ public class GetAllPagesEndpoint(IPageRepository pageRepo) : EndpointWithoutRequ
         {
             Slug = p.Slug,
             Title = p.Title,
-            IsMarkdown = p.IsMarkdown
+            IsMarkdown = p.IsMarkdown,
+            IsPublished = p.IsPublished
         });
         await Send.OkAsync(result, cancellation: ct);
     }

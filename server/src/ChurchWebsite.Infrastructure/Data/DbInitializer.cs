@@ -26,9 +26,20 @@ public class DbInitializer(DbConnectionFactory factory)
                 title VARCHAR(200) NOT NULL,
                 body TEXT NOT NULL,
                 is_markdown BOOLEAN NOT NULL DEFAULT FALSE,
+                is_published BOOLEAN NOT NULL DEFAULT TRUE,
                 updated_at TIMESTAMP WITH TIME ZONE NOT NULL
             );";
         await conn.ExecuteAsync(createPagesSql);
+
+        // Migrate existing tables that lack is_published
+        var columnExists = await conn.ExecuteScalarAsync<int>(
+            @"SELECT COUNT(*) FROM information_schema.columns
+              WHERE table_name = 'pages' AND column_name = 'is_published'");
+        if (columnExists == 0)
+        {
+            await conn.ExecuteAsync(
+                "ALTER TABLE pages ADD COLUMN is_published BOOLEAN NOT NULL DEFAULT TRUE;");
+        }
 
         var adminExists = await conn.QueryFirstOrDefaultAsync<User>(
             "SELECT * FROM users WHERE username = @username", new { username = "admin" });
@@ -60,10 +71,11 @@ public class DbInitializer(DbConnectionFactory factory)
                 Title = "Welcome to Our Church",
                 Body = "<h1>Welcome</h1><p>This is the home page for our church website.</p>",
                 IsMarkdown = false,
+                IsPublished = true,
                 UpdatedAt = DateTime.UtcNow
             };
             await conn.ExecuteAsync(
-                "INSERT INTO pages (id, slug, title, body, is_markdown, updated_at) VALUES (@Id, @Slug, @Title, @Body, @IsMarkdown, @UpdatedAt)",
+                "INSERT INTO pages (id, slug, title, body, is_markdown, is_published, updated_at) VALUES (@Id, @Slug, @Title, @Body, @IsMarkdown, @IsPublished, @UpdatedAt)",
                 page);
         }
     }

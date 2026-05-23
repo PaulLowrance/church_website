@@ -25,7 +25,7 @@ public class PageRepository(DbConnectionFactory factory) : IPageRepository
     {
         using var conn = factory.CreateConnection();
         await conn.ExecuteAsync(
-            @"UPDATE pages SET title = @Title, body = @Body, is_markdown = @IsMarkdown, updated_at = @UpdatedAt WHERE slug = @Slug",
+            @"UPDATE pages SET title = @Title, body = @Body, is_markdown = @IsMarkdown, is_published = @IsPublished, updated_at = @UpdatedAt WHERE slug = @Slug",
             page);
     }
 
@@ -33,7 +33,7 @@ public class PageRepository(DbConnectionFactory factory) : IPageRepository
     {
         using var conn = factory.CreateConnection();
         await conn.ExecuteAsync(
-            @"INSERT INTO pages (id, slug, title, body, is_markdown, updated_at) VALUES (@Id, @Slug, @Title, @Body, @IsMarkdown, @UpdatedAt)",
+            @"INSERT INTO pages (id, slug, title, body, is_markdown, is_published, updated_at) VALUES (@Id, @Slug, @Title, @Body, @IsMarkdown, @IsPublished, @UpdatedAt)",
             page);
     }
 
@@ -44,5 +44,13 @@ public class PageRepository(DbConnectionFactory factory) : IPageRepository
             "SELECT COUNT(*) FROM pages WHERE slug = @slug",
             new { slug });
         return count > 0;
+    }
+
+    public async Task DeleteAsync(string slug)
+    {
+        using var conn = factory.CreateConnection();
+        await conn.ExecuteAsync(
+            "DELETE FROM pages WHERE slug = @slug",
+            new { slug });
     }
 }

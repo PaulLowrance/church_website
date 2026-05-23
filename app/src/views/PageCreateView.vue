@@ -10,6 +10,7 @@ const title = ref('')
 const slug = ref('')
 const body = ref('')
 const isMarkdown = ref(false)
+const isPublished = ref(false)
 const saving = ref(false)
 const error = ref('')
 const titleError = ref('')
@@ -73,7 +74,8 @@ async function savePage() {
       slug: slug.value,
       title: title.value,
       body: body.value,
-      isMarkdown: isMarkdown.value
+      isMarkdown: isMarkdown.value,
+      isPublished: isPublished.value
     })
     router.push('/admin')
   } catch (err: any) {
@@ -128,6 +130,13 @@ function goBack() {
           <q-toggle
             v-model="isMarkdown"
             label="Use Markdown"
+            class="q-mb-md"
+          />
+
+          <q-toggle
+            v-model="isPublished"
+            label="Publish Page"
+            color="positive"
             class="q-mb-md"
           />
 

@@ -13,6 +13,7 @@ public class GetPageResponse
     public string Title { get; set; } = string.Empty;
     public string Body { get; set; } = string.Empty;
     public bool IsMarkdown { get; set; }
+    public bool IsPublished { get; set; }
 }
 
 public class GetPageEndpoint(IPageRepository pageRepo) : Endpoint<GetPageRequest, GetPageResponse>
@@ -32,11 +33,19 @@ public class GetPageEndpoint(IPageRepository pageRepo) : Endpoint<GetPageRequest
             return;
         }
 
+        // Unpublished pages are hidden from anonymous users
+        if (!page.IsPublished && User.Identity?.IsAuthenticated != true)
+        {
+            await Send.NotFoundAsync(ct);
+            return;
+        }
+
         await Send.OkAsync(new GetPageResponse
         {
             Title = page.Title,
             Body = page.Body,
-            IsMarkdown = page.IsMarkdown
+            IsMarkdown = page.IsMarkdown,
+            IsPublished = page.IsPublished
         }, cancellation: ct);
     }
 }
