@@ -9,6 +9,8 @@ interface PageItem {
   title: string
   isMarkdown: boolean
   isPublished: boolean
+  showInNav: boolean
+  navTitle: string
 }
 
 const pages = ref<PageItem[]>([])
@@ -85,6 +87,8 @@ function logout() {
             { name: 'slug', label: 'Slug', field: 'slug', align: 'left' },
             { name: 'format', label: 'Format', field: 'isMarkdown', align: 'left' },
             { name: 'published', label: 'Published', field: 'isPublished', align: 'center' },
+            { name: 'nav', label: 'In Nav', field: 'showInNav', align: 'center' },
+            { name: 'navTitle', label: 'Nav Text', field: 'navTitle', align: 'left' },
             { name: 'actions', label: 'Actions', field: 'actions', align: 'center' }
           ]"
           row-key="slug"
@@ -108,6 +112,15 @@ function logout() {
               <q-icon
                 :name="props.row.isPublished ? 'check_circle' : 'cancel'"
                 :color="props.row.isPublished ? 'positive' : 'grey'"
+                size="sm"
+              />
+            </q-td>
+          </template>
+          <template v-slot:body-cell-nav="props">
+            <q-td :props="props">
+              <q-icon
+                :name="props.row.showInNav ? 'check_circle' : 'cancel'"
+                :color="props.row.showInNav ? 'positive' : 'grey'"
                 size="sm"
               />
             </q-td>

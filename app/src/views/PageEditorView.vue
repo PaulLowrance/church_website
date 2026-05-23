@@ -12,9 +12,12 @@ const title = ref('')
 const body = ref('')
 const isMarkdown = ref(false)
 const isPublished = ref(false)
+const showInNav = ref(true)
+const navTitle = ref('')
 const loading = ref(false)
 const saving = ref(false)
 const error = ref('')
+const navTitleWarning = ref('')
 
 const previewHtml = computed(() => {
   if (isMarkdown.value) {
@@ -31,6 +34,8 @@ onMounted(async () => {
     body.value = response.data.body
     isMarkdown.value = response.data.isMarkdown
     isPublished.value = response.data.isPublished
+    showInNav.value = response.data.showInNav
+    navTitle.value = response.data.navTitle
   } catch (err) {
     error.value = 'Failed to load page content'
     console.error(err)
@@ -38,6 +43,14 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+function checkNavTitle() {
+  if (navTitle.value.length > 25) {
+    navTitleWarning.value = 'Menu name will be truncated to 25 characters'
+  } else {
+    navTitleWarning.value = ''
+  }
+}
 
 async function savePage() {
   saving.value = true
@@ -48,7 +61,9 @@ async function savePage() {
       title: title.value,
       body: body.value,
       isMarkdown: isMarkdown.value,
-      isPublished: isPublished.value
+      isPublished: isPublished.value,
+      showInNav: showInNav.value,
+      navTitle: navTitle.value
     })
     router.push('/admin')
   } catch (err) {
@@ -94,6 +109,27 @@ function goBack() {
             label="Publish Page"
             color="positive"
             class="q-mb-md"
+          />
+
+          <q-toggle
+            v-model="showInNav"
+            label="Show in Navigation Menu"
+            color="info"
+            class="q-mb-md"
+          />
+
+          <q-input
+            v-model="navTitle"
+            label="Navigation Menu Text"
+            outlined
+            dense
+            class="q-mb-md"
+            hint="Text shown in the navigation menu. Defaults to page title."
+            :error="!!navTitleWarning"
+            :error-message="navTitleWarning"
+            maxlength="25"
+            counter
+            @update:model-value="checkNavTitle"
           />
 
           <div class="q-mb-md">

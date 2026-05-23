@@ -6,6 +6,7 @@ public interface IPageRepository
 {
     Task<Page?> GetBySlugAsync(string slug);
     Task<IEnumerable<Page>> GetAllAsync();
+    Task<IEnumerable<Page>> GetNavPagesAsync();
     Task UpdateAsync(Page page);
     Task CreateAsync(Page page);
     Task<bool> SlugExistsAsync(string slug);
