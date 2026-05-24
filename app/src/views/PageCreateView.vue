@@ -37,11 +37,11 @@ function generateSlug(input: string): string {
   return s
 }
 
-watch(title, (newTitle) => {
-  if (!slug.value || slug.value === generateSlug(title.value)) {
+watch(title, (newTitle, oldTitle) => {
+  if (!slug.value || slug.value === generateSlug(oldTitle)) {
     slug.value = generateSlug(newTitle)
   }
-  if (!navTitle.value || navTitle.value === title.value) {
+  if (!navTitle.value || navTitle.value === oldTitle) {
     navTitle.value = newTitle
   }
 })
