@@ -19,23 +19,23 @@ The purpose of this site is to provide administrators and church leadership an e
 
 ## Prioritized functional goals for the site:
 1. Provide a way to create & manage static site content for the church via an admin panel. (examples "Home" page, "About Us" page, Header & Footer content)
-    * Static pages should follow the UI theme of the site and should be built from one or more templates. 
-    * The body content with in should be able to be added or modified from the admin panel by an admin and shouldn't require a deployment of new code.
-    * The content editing in the admin panel should allow the user toi choose Markdown or HTML for styling the body content.
-2. Provide a page to see the sermons that have been uploaded to the site with a clean UI that contains the speaker name, date & time published, and the ability to listen to the audio on the page or download for listening later.
-    * The sermon list should be maintained via an option in the admin menu.
-    * When uploading a sermon audio file the following are required:
-        - Sermon Name
+    - [ ] Static pages should follow the UI theme of the site and should be built from one or more templates. 
+    - [x] The body content with in should be able to be added or modified from the admin panel by an admin and shouldn't require a deployment of new code.
+    - [x] The content editing in the admin panel should allow the user to choose Markdown or HTML for styling the body content.
+2. Provide a page to see the podcast episodes (sermons usually) that have been uploaded to the site with a clean UI that contains the speaker name, date & time published, and the ability to listen to the audio on the page or download for listening later.
+    - [ ] The sermon list should be maintained via an option in the admin menu.
+    - [ ] When uploading an episode audio file the following are required:
+        - Episode Name
         - Speaker Name
         - Date & Time to publish
         - Uploaded audio file
-    * The date uploaded should be set automatically when the sermon entry is saved
-    * Additional fields that should be present but are optional are:
+    - [ ] The date uploaded should be set automatically when the sermon entry is saved
+    - [ ] Additional fields that should be present but are optional are:
         - Description
         - Series Name
-    * There should also be a way to apply tags to the sermon entries
-    * The audio file should be stored on the server, not in the container and the path to the storage location should be configurable in appsettings.
-3. The sermons list is a feed for a podcast and that functionality must be duplicated but remain at the same path and the same structure as found here at http://bhpbc.org/podcast/rss/.
+    - [ ] There should also be a way to apply tags to the sermon entries
+    - [ ] The audio file should be stored on the server or cloud storage such as AWS S3 or Azure Blob Storage, not in the container and the path to the storage location should be configurable in appsettings.
+3. The episode (sermons) list is a feed for a podcast and that functionality must be duplicated but remain at the same path and the same structure as found here at http://bhpbc.org/podcast/rss/.
 4. Accessability is important to the site. Ensure that the controls and UI elements are following the Web Content Accessibility Guidelines (WCAG).
 
 ## Technical goals for the site:
