@@ -12,7 +12,7 @@ public class GetPageResponse
 {
     public string Title { get; set; } = string.Empty;
     public string Body { get; set; } = string.Empty;
-    public bool IsMarkdown { get; set; }
+    public string ContentType { get; set; } = "wysiwyg";
     public bool IsPublished { get; set; }
 }
 
@@ -44,7 +44,7 @@ public class GetPageEndpoint(IPageRepository pageRepo) : Endpoint<GetPageRequest
         {
             Title = page.Title,
             Body = page.Body,
-            IsMarkdown = page.IsMarkdown,
+            ContentType = page.ContentType,
             IsPublished = page.IsPublished
         }, cancellation: ct);
     }

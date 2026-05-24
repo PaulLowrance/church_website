@@ -9,13 +9,13 @@ const route = useRoute()
 const authStore = useAuthStore()
 const title = ref('')
 const body = ref('')
-const isMarkdown = ref(false)
+const contentType = ref('wysiwyg')
 const isPublished = ref(true)
 const notFound = ref(false)
 const loading = ref(true)
 
 const renderedBody = computed(() => {
-  if (isMarkdown.value) {
+  if (contentType.value === 'markdown') {
     return marked(body.value, { async: false }) as string
   }
   return body.value
@@ -28,14 +28,14 @@ async function loadPage(slug: string) {
     const response = await apiClient.get(`/pages/${slug}`)
     title.value = response.data.title
     body.value = response.data.body
-    isMarkdown.value = response.data.isMarkdown
+    contentType.value = response.data.contentType || 'wysiwyg'
     isPublished.value = response.data.isPublished
   } catch (error: any) {
     if (error.response?.status === 404) {
       notFound.value = true
       title.value = 'Page Not Found'
       body.value = '<p>The page you are looking for does not exist.</p>'
-      isMarkdown.value = false
+      contentType.value = 'wysiwyg'
       isPublished.value = true
     } else {
       console.error('Failed to load page', error)

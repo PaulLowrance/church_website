@@ -9,7 +9,7 @@ public class UpdatePageRequest
     public string Slug { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
     public string Body { get; set; } = string.Empty;
-    public bool IsMarkdown { get; set; }
+    public string ContentType { get; set; } = "wysiwyg";
     public bool IsPublished { get; set; }
     public bool ShowInNav { get; set; }
     public string NavTitle { get; set; } = string.Empty;
@@ -20,7 +20,7 @@ public class UpdatePageResponse
     public string Slug { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
     public string Body { get; set; } = string.Empty;
-    public bool IsMarkdown { get; set; }
+    public string ContentType { get; set; } = "wysiwyg";
     public bool IsPublished { get; set; }
     public bool ShowInNav { get; set; }
     public string NavTitle { get; set; } = string.Empty;
@@ -49,7 +49,7 @@ public class UpdatePageEndpoint(IPageRepository pageRepo) : Endpoint<UpdatePageR
 
         existing.Title = req.Title;
         existing.Body = req.Body;
-        existing.IsMarkdown = req.IsMarkdown;
+        existing.ContentType = req.ContentType;
         existing.IsPublished = req.IsPublished;
         existing.ShowInNav = req.ShowInNav;
         existing.NavTitle = navTitle;
@@ -62,7 +62,7 @@ public class UpdatePageEndpoint(IPageRepository pageRepo) : Endpoint<UpdatePageR
             Slug = existing.Slug,
             Title = existing.Title,
             Body = existing.Body,
-            IsMarkdown = existing.IsMarkdown,
+            ContentType = existing.ContentType,
             IsPublished = existing.IsPublished,
             ShowInNav = existing.ShowInNav,
             NavTitle = existing.NavTitle

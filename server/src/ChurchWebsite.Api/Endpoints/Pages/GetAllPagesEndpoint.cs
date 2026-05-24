@@ -8,7 +8,7 @@ public class PageListItem
 {
     public string Slug { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
-    public bool IsMarkdown { get; set; }
+    public string ContentType { get; set; } = "wysiwyg";
     public bool IsPublished { get; set; }
     public bool ShowInNav { get; set; }
     public string NavTitle { get; set; } = string.Empty;
@@ -29,7 +29,7 @@ public class GetAllPagesEndpoint(IPageRepository pageRepo) : EndpointWithoutRequ
         {
             Slug = p.Slug,
             Title = p.Title,
-            IsMarkdown = p.IsMarkdown,
+            ContentType = p.ContentType,
             IsPublished = p.IsPublished,
             ShowInNav = p.ShowInNav,
             NavTitle = p.NavTitle

@@ -32,7 +32,7 @@ public class PageRepository(DbConnectionFactory factory) : IPageRepository
     {
         using var conn = factory.CreateConnection();
         await conn.ExecuteAsync(
-            @"UPDATE pages SET title = @Title, body = @Body, is_markdown = @IsMarkdown, is_published = @IsPublished, show_in_nav = @ShowInNav, nav_title = @NavTitle, updated_at = @UpdatedAt WHERE slug = @Slug",
+            @"UPDATE pages SET title = @Title, body = @Body, content_type = @ContentType, is_published = @IsPublished, show_in_nav = @ShowInNav, nav_title = @NavTitle, updated_at = @UpdatedAt WHERE slug = @Slug",
             page);
     }
 
@@ -40,7 +40,7 @@ public class PageRepository(DbConnectionFactory factory) : IPageRepository
     {
         using var conn = factory.CreateConnection();
         await conn.ExecuteAsync(
-            @"INSERT INTO pages (id, slug, title, body, is_markdown, is_published, show_in_nav, nav_title, updated_at) VALUES (@Id, @Slug, @Title, @Body, @IsMarkdown, @IsPublished, @ShowInNav, @NavTitle, @UpdatedAt)",
+            @"INSERT INTO pages (id, slug, title, body, content_type, is_published, show_in_nav, nav_title, updated_at) VALUES (@Id, @Slug, @Title, @Body, @ContentType, @IsPublished, @ShowInNav, @NavTitle, @UpdatedAt)",
             page);
     }
 
