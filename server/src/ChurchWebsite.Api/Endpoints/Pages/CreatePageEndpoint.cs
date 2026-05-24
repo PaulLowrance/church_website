@@ -12,6 +12,8 @@ public class CreatePageRequest
     public string Body { get; set; } = string.Empty;
     public bool IsMarkdown { get; set; }
     public bool IsPublished { get; set; }
+    public bool ShowInNav { get; set; } = true;
+    public string? NavTitle { get; set; }
 }
 
 public class CreatePageResponse
@@ -30,21 +32,18 @@ public class CreatePageEndpoint(IPageRepository pageRepo) : Endpoint<CreatePageR
 
     public override async Task HandleAsync(CreatePageRequest req, CancellationToken ct)
     {
-        // Validate title
         if (string.IsNullOrWhiteSpace(req.Title))
         {
             ThrowError("Title is required");
             return;
         }
 
-        // Validate body
         if (string.IsNullOrWhiteSpace(req.Body))
         {
             ThrowError("Body content is required");
             return;
         }
 
-        // Generate or normalize slug
         var slug = string.IsNullOrWhiteSpace(req.Slug)
             ? GenerateSlug(req.Title)
             : GenerateSlug(req.Slug);
@@ -55,12 +54,15 @@ public class CreatePageEndpoint(IPageRepository pageRepo) : Endpoint<CreatePageR
             return;
         }
 
-        // Check uniqueness
         if (await pageRepo.SlugExistsAsync(slug))
         {
             ThrowError($"A page with slug '{slug}' already exists");
             return;
         }
+
+        var navTitle = string.IsNullOrWhiteSpace(req.NavTitle) ? req.Title.Trim() : req.NavTitle.Trim();
+        if (navTitle.Length > 25)
+            navTitle = navTitle[..25];
 
         var page = new Page
         {
@@ -70,6 +72,8 @@ public class CreatePageEndpoint(IPageRepository pageRepo) : Endpoint<CreatePageR
             Body = req.Body,
             IsMarkdown = req.IsMarkdown,
             IsPublished = req.IsPublished,
+            ShowInNav = req.ShowInNav,
+            NavTitle = navTitle,
             UpdatedAt = DateTime.UtcNow
         };
 

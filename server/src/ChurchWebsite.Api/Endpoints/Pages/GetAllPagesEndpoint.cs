@@ -10,6 +10,8 @@ public class PageListItem
     public string Title { get; set; } = string.Empty;
     public bool IsMarkdown { get; set; }
     public bool IsPublished { get; set; }
+    public bool ShowInNav { get; set; }
+    public string NavTitle { get; set; } = string.Empty;
 }
 
 public class GetAllPagesEndpoint(IPageRepository pageRepo) : EndpointWithoutRequest<IEnumerable<PageListItem>>
@@ -28,7 +30,9 @@ public class GetAllPagesEndpoint(IPageRepository pageRepo) : EndpointWithoutRequ
             Slug = p.Slug,
             Title = p.Title,
             IsMarkdown = p.IsMarkdown,
-            IsPublished = p.IsPublished
+            IsPublished = p.IsPublished,
+            ShowInNav = p.ShowInNav,
+            NavTitle = p.NavTitle
         });
         await Send.OkAsync(result, cancellation: ct);
     }

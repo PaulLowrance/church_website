@@ -11,11 +11,14 @@ const slug = ref('')
 const body = ref('')
 const isMarkdown = ref(false)
 const isPublished = ref(false)
+const showInNav = ref(true)
+const navTitle = ref('')
 const saving = ref(false)
 const error = ref('')
 const titleError = ref('')
 const bodyError = ref('')
 const slugError = ref('')
+const navTitleWarning = ref('')
 
 const previewHtml = computed(() => {
   if (isMarkdown.value) {
@@ -37,6 +40,17 @@ function generateSlug(input: string): string {
 watch(title, (newTitle) => {
   if (!slug.value || slug.value === generateSlug(title.value)) {
     slug.value = generateSlug(newTitle)
+  }
+  if (!navTitle.value || navTitle.value === title.value) {
+    navTitle.value = newTitle
+  }
+})
+
+watch(navTitle, (newVal) => {
+  if (newVal.length > 25) {
+    navTitleWarning.value = 'Menu name will be truncated to 25 characters'
+  } else {
+    navTitleWarning.value = ''
   }
 })
 
@@ -75,7 +89,9 @@ async function savePage() {
       title: title.value,
       body: body.value,
       isMarkdown: isMarkdown.value,
-      isPublished: isPublished.value
+      isPublished: isPublished.value,
+      showInNav: showInNav.value,
+      navTitle: navTitle.value
     })
     router.push('/admin')
   } catch (err: any) {
@@ -138,6 +154,26 @@ function goBack() {
             label="Publish Page"
             color="positive"
             class="q-mb-md"
+          />
+
+          <q-toggle
+            v-model="showInNav"
+            label="Show in Navigation Menu"
+            color="info"
+            class="q-mb-md"
+          />
+
+          <q-input
+            v-model="navTitle"
+            label="Navigation Menu Text"
+            outlined
+            dense
+            class="q-mb-md"
+            hint="Text shown in the navigation menu. Defaults to page title."
+            :error="!!navTitleWarning"
+            :error-message="navTitleWarning"
+            maxlength="25"
+            counter
           />
 
           <div class="q-mb-md">

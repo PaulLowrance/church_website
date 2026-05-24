@@ -21,11 +21,18 @@ public class PageRepository(DbConnectionFactory factory) : IPageRepository
         return await conn.QueryAsync<Page>("SELECT * FROM pages ORDER BY title");
     }
 
+    public async Task<IEnumerable<Page>> GetNavPagesAsync()
+    {
+        using var conn = factory.CreateConnection();
+        return await conn.QueryAsync<Page>(
+            "SELECT * FROM pages WHERE show_in_nav = TRUE AND is_published = TRUE ORDER BY title");
+    }
+
     public async Task UpdateAsync(Page page)
     {
         using var conn = factory.CreateConnection();
         await conn.ExecuteAsync(
-            @"UPDATE pages SET title = @Title, body = @Body, is_markdown = @IsMarkdown, is_published = @IsPublished, updated_at = @UpdatedAt WHERE slug = @Slug",
+            @"UPDATE pages SET title = @Title, body = @Body, is_markdown = @IsMarkdown, is_published = @IsPublished, show_in_nav = @ShowInNav, nav_title = @NavTitle, updated_at = @UpdatedAt WHERE slug = @Slug",
             page);
     }
 
@@ -33,7 +40,7 @@ public class PageRepository(DbConnectionFactory factory) : IPageRepository
     {
         using var conn = factory.CreateConnection();
         await conn.ExecuteAsync(
-            @"INSERT INTO pages (id, slug, title, body, is_markdown, is_published, updated_at) VALUES (@Id, @Slug, @Title, @Body, @IsMarkdown, @IsPublished, @UpdatedAt)",
+            @"INSERT INTO pages (id, slug, title, body, is_markdown, is_published, show_in_nav, nav_title, updated_at) VALUES (@Id, @Slug, @Title, @Body, @IsMarkdown, @IsPublished, @ShowInNav, @NavTitle, @UpdatedAt)",
             page);
     }
 

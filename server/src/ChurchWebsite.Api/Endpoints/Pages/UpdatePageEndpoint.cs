@@ -11,6 +11,8 @@ public class UpdatePageRequest
     public string Body { get; set; } = string.Empty;
     public bool IsMarkdown { get; set; }
     public bool IsPublished { get; set; }
+    public bool ShowInNav { get; set; }
+    public string NavTitle { get; set; } = string.Empty;
 }
 
 public class UpdatePageResponse
@@ -20,6 +22,8 @@ public class UpdatePageResponse
     public string Body { get; set; } = string.Empty;
     public bool IsMarkdown { get; set; }
     public bool IsPublished { get; set; }
+    public bool ShowInNav { get; set; }
+    public string NavTitle { get; set; } = string.Empty;
 }
 
 public class UpdatePageEndpoint(IPageRepository pageRepo) : Endpoint<UpdatePageRequest, UpdatePageResponse>
@@ -39,10 +43,16 @@ public class UpdatePageEndpoint(IPageRepository pageRepo) : Endpoint<UpdatePageR
             return;
         }
 
+        var navTitle = string.IsNullOrWhiteSpace(req.NavTitle) ? req.Title.Trim() : req.NavTitle.Trim();
+        if (navTitle.Length > 25)
+            navTitle = navTitle[..25];
+
         existing.Title = req.Title;
         existing.Body = req.Body;
         existing.IsMarkdown = req.IsMarkdown;
         existing.IsPublished = req.IsPublished;
+        existing.ShowInNav = req.ShowInNav;
+        existing.NavTitle = navTitle;
         existing.UpdatedAt = DateTime.UtcNow;
 
         await pageRepo.UpdateAsync(existing);
@@ -53,7 +63,9 @@ public class UpdatePageEndpoint(IPageRepository pageRepo) : Endpoint<UpdatePageR
             Title = existing.Title,
             Body = existing.Body,
             IsMarkdown = existing.IsMarkdown,
-            IsPublished = existing.IsPublished
+            IsPublished = existing.IsPublished,
+            ShowInNav = existing.ShowInNav,
+            NavTitle = existing.NavTitle
         }, cancellation: ct);
     }
 }
