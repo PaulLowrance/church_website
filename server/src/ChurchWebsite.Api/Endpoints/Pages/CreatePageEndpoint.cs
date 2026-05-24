@@ -10,7 +10,7 @@ public class CreatePageRequest
     public string? Slug { get; set; }
     public string Title { get; set; } = string.Empty;
     public string Body { get; set; } = string.Empty;
-    public bool IsMarkdown { get; set; }
+    public string ContentType { get; set; } = "wysiwyg";
     public bool IsPublished { get; set; }
     public bool ShowInNav { get; set; } = true;
     public string? NavTitle { get; set; }
@@ -70,7 +70,7 @@ public class CreatePageEndpoint(IPageRepository pageRepo) : Endpoint<CreatePageR
             Slug = slug,
             Title = req.Title.Trim(),
             Body = req.Body,
-            IsMarkdown = req.IsMarkdown,
+            ContentType = req.ContentType,
             IsPublished = req.IsPublished,
             ShowInNav = req.ShowInNav,
             NavTitle = navTitle,

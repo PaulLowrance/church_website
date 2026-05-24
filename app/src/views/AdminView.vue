@@ -7,7 +7,7 @@ import { useAuthStore } from '@/stores/auth'
 interface PageItem {
   slug: string
   title: string
-  isMarkdown: boolean
+  contentType: string
   isPublished: boolean
   showInNav: boolean
   navTitle: string
@@ -85,7 +85,7 @@ function logout() {
           :columns="[
             { name: 'title', label: 'Title', field: 'title', align: 'left' },
             { name: 'slug', label: 'Slug', field: 'slug', align: 'left' },
-            { name: 'format', label: 'Format', field: 'isMarkdown', align: 'left' },
+            { name: 'format', label: 'Format', field: 'contentType', align: 'left' },
             { name: 'published', label: 'Published', field: 'isPublished', align: 'center' },
             { name: 'nav', label: 'In Nav', field: 'showInNav', align: 'center' },
             { name: 'navTitle', label: 'Nav Text', field: 'navTitle', align: 'left' },
@@ -99,11 +99,11 @@ function logout() {
           <template v-slot:body-cell-format="props">
             <q-td :props="props">
               <q-chip
-                :color="props.row.isMarkdown ? 'secondary' : 'primary'"
+                :color="props.row.contentType === 'markdown' ? 'secondary' : props.row.contentType === 'html' ? 'accent' : 'primary'"
                 text-color="white"
                 dense
               >
-                {{ props.row.isMarkdown ? 'Markdown' : 'HTML / WYSIWYG' }}
+                {{ props.row.contentType === 'markdown' ? 'Markdown' : props.row.contentType === 'html' ? 'HTML' : 'WYSIWYG' }}
               </q-chip>
             </q-td>
           </template>

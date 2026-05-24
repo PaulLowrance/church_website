@@ -9,7 +9,7 @@ const router = useRouter()
 const title = ref('')
 const slug = ref('')
 const body = ref('')
-const isMarkdown = ref(false)
+const contentType = ref<'wysiwyg' | 'markdown' | 'html'>('wysiwyg')
 const isPublished = ref(false)
 const showInNav = ref(true)
 const navTitle = ref('')
@@ -21,7 +21,7 @@ const slugError = ref('')
 const navTitleWarning = ref('')
 
 const previewHtml = computed(() => {
-  if (isMarkdown.value) {
+  if (contentType.value === 'markdown') {
     return marked(body.value, { async: false }) as string
   }
   return body.value
@@ -88,7 +88,7 @@ async function savePage() {
       slug: slug.value,
       title: title.value,
       body: body.value,
-      isMarkdown: isMarkdown.value,
+      contentType: contentType.value,
       isPublished: isPublished.value,
       showInNav: showInNav.value,
       navTitle: navTitle.value
@@ -143,10 +143,19 @@ function goBack() {
             :error-message="slugError"
           />
 
-          <q-toggle
-            v-model="isMarkdown"
-            label="Use Markdown"
+          <q-select
+            v-model="contentType"
+            :options="[
+              { label: 'WYSIWYG Editor', value: 'wysiwyg' },
+              { label: 'Markdown', value: 'markdown' },
+              { label: 'HTML', value: 'html' }
+            ]"
+            label="Content Format"
+            outlined
+            dense
             class="q-mb-md"
+            emit-value
+            map-options
           />
 
           <q-toggle
@@ -179,7 +188,7 @@ function goBack() {
           <div class="q-mb-md">
             <div class="text-subtitle2 q-mb-sm">Body Content *</div>
             <q-editor
-              v-if="!isMarkdown"
+              v-if="contentType === 'wysiwyg'"
               v-model="body"
               min-height="300px"
               :toolbar="[
@@ -196,7 +205,7 @@ function goBack() {
                   type="textarea"
                   outlined
                   rows="15"
-                  label="Markdown Content"
+                  :label="contentType === 'markdown' ? 'Markdown Content' : 'HTML Content'"
                 />
               </div>
               <div class="col-12 col-md-6">
