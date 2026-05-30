@@ -47,6 +47,14 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Ensure storage path is absolute before registering services
+var uploadsPath = builder.Configuration["Storage:AudioPath"] ?? "uploads/audio";
+if (!Path.IsPathRooted(uploadsPath))
+{
+    uploadsPath = Path.Combine(builder.Environment.ContentRootPath, uploadsPath);
+    builder.Configuration["Storage:AudioPath"] = uploadsPath;
+}
+
 // Infrastructure services (DB, repositories, auth)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
@@ -68,6 +76,15 @@ using (var scope = app.Services.CreateScope())
 app.UseCors("AllowVite");
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Serve uploaded audio files
+var staticFilesPath = app.Configuration["Storage:AudioPath"] ?? "uploads/audio";
+Directory.CreateDirectory(staticFilesPath);
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(staticFilesPath),
+    RequestPath = "/uploads/audio"
+});
 
 app.UseFastEndpoints();
 app.UseSwaggerGen();

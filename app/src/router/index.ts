@@ -34,6 +34,29 @@ const router = createRouter({
       meta: { requiresAuth: true, role: 'Admin' }
     },
     {
+      path: '/podcast',
+      name: 'podcast',
+      component: () => import('@/views/PodcastListView.vue')
+    },
+    {
+      path: '/admin/podcast',
+      name: 'podcast-admin',
+      component: () => import('@/views/PodcastAdminView.vue'),
+      meta: { requiresAuth: true, role: 'Admin' }
+    },
+    {
+      path: '/admin/podcast/create',
+      name: 'podcast-create',
+      component: () => import('@/views/PodcastCreateView.vue'),
+      meta: { requiresAuth: true, role: 'Admin' }
+    },
+    {
+      path: '/admin/podcast/:id/edit',
+      name: 'podcast-edit',
+      component: () => import('@/views/PodcastEditView.vue'),
+      meta: { requiresAuth: true, role: 'Admin' }
+    },
+    {
       path: '/:slug',
       name: 'page',
       component: HomeView

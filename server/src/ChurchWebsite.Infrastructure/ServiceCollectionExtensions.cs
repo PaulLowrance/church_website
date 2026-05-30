@@ -14,7 +14,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<DbInitializer>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IPageRepository, PageRepository>();
+        services.AddScoped<IPodcastEpisodeRepository, PodcastEpisodeRepository>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IFileStorageService, LocalFileStorageService>();
         return services;
     }
 }

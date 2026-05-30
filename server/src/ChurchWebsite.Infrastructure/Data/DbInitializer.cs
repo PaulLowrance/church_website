@@ -34,6 +34,31 @@ public class DbInitializer(DbConnectionFactory factory)
             );";
         await conn.ExecuteAsync(createPagesSql);
 
+        var createPodcastEpisodesSql = @"
+            CREATE TABLE IF NOT EXISTS podcast_episodes (
+                id UUID PRIMARY KEY,
+                title VARCHAR(300) NOT NULL,
+                speaker_name VARCHAR(200) NOT NULL,
+                description TEXT,
+                series_name VARCHAR(200),
+                audio_file_path TEXT NOT NULL,
+                audio_file_name VARCHAR(300) NOT NULL,
+                audio_file_size BIGINT NOT NULL DEFAULT 0,
+                audio_content_type VARCHAR(100) NOT NULL DEFAULT 'audio/mpeg',
+                published_at TIMESTAMP WITH TIME ZONE NOT NULL,
+                created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+                updated_at TIMESTAMP WITH TIME ZONE NOT NULL
+            );";
+        await conn.ExecuteAsync(createPodcastEpisodesSql);
+
+        var createEpisodeTagsSql = @"
+            CREATE TABLE IF NOT EXISTS episode_tags (
+                episode_id UUID NOT NULL REFERENCES podcast_episodes(id) ON DELETE CASCADE,
+                tag VARCHAR(100) NOT NULL,
+                PRIMARY KEY (episode_id, tag)
+            );";
+        await conn.ExecuteAsync(createEpisodeTagsSql);
+
         await MigrateColumnAsync(conn, "is_published", "BOOLEAN NOT NULL DEFAULT TRUE");
         await MigrateColumnAsync(conn, "show_in_nav", "BOOLEAN NOT NULL DEFAULT TRUE");
         await MigrateColumnAsync(conn, "nav_title", "VARCHAR(25) NOT NULL DEFAULT ''");
