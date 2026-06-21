@@ -20,3 +20,6 @@ app/dist/
 
 # Logs
 *.log
+
+# Uploaded media (audio files, images, etc.)
+**/uploads/
