@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Church website for Bethlehem Haven Primitive Baptist Church (bhpbc.org). Replaces an aging Django site. Provides static page management, sermon hosting, and podcast RSS feed.
+Church website for Brentwood Hills Primitive Baptist Church (bhpbc.org). Replaces an aging Django site. Provides static page management, sermon hosting, and podcast RSS feed.
 
 ## Repository Structure
 
@@ -170,7 +170,18 @@ Lowercase → Remove special chars → Replace spaces with hyphens → Collapse 
 
 ## Contact / Context
 
-- This project is for Bethlehem Haven Primitive Baptist Church (bhpbc.org)
+- This project is for Brentwood Hills Primitive Baptist Church (bhpbc.org)
 - Replacement of deprecated Django site
 - Accessibility (WCAG) is a priority
 - Mobile-friendly design required
+
+## Multi-Organization Deployability
+
+The application is designed to be deployed for any church or small organization without code changes. All branding and site-specific values are driven by configuration:
+
+- **Church name:** `Site:ChurchName` in `appsettings.json` (returned by `GET /api/site-info`)
+- **Podcast metadata:** `Podcast:Title`, `Podcast:Description`, `Podcast:Author`, `Podcast:BaseUrl` in `appsettings.json`
+- **Storage paths:** `Storage:AudioPath` and `Storage:PublicPath` in `appsettings.json`
+- **Database connection:** `ConnectionStrings:DefaultConnection` in `appsettings.json`
+
+When onboarding a new church, only `appsettings.json` (or environment-specific overrides) need to be updated. No frontend or backend code should be modified for rebranding.

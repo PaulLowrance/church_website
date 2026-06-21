@@ -18,9 +18,9 @@ public class PodcastRssEndpoint(IPodcastEpisodeRepository repo, IFileStorageServ
     {
         var episodes = await repo.GetPublishedAsync();
         var baseUrl = Config["Podcast:BaseUrl"] ?? "https://bhpbc.org";
-        var title = Config["Podcast:Title"] ?? "Bethlehem Haven Primitive Baptist Church Sermons";
-        var description = Config["Podcast:Description"] ?? "Sermons from Bethlehem Haven Primitive Baptist Church";
-        var author = Config["Podcast:Author"] ?? "Bethlehem Haven Primitive Baptist Church";
+        var title = Config["Podcast:Title"] ?? "Brentwood Hills Primitive Baptist Church Sermons";
+        var description = Config["Podcast:Description"] ?? "Sermons from Brentwood Hills Primitive Baptist Church";
+        var author = Config["Podcast:Author"] ?? "Brentwood Hills Primitive Baptist Church";
         var imageUrl = Config["Podcast:ImageUrl"] ?? "";
         var category = Config["Podcast:Category"] ?? "Religion & Spirituality";
 

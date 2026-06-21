@@ -20,6 +20,7 @@ interface PodcastEpisode {
 const episodes = ref<PodcastEpisode[]>([])
 const loading = ref(false)
 const error = ref('')
+const churchName = ref('')
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-US', {
@@ -40,8 +41,12 @@ function formatFileSize(bytes: number): string {
 onMounted(async () => {
   loading.value = true
   try {
-    const response = await apiClient.get('/podcast/episodes')
-    episodes.value = response.data
+    const [episodesRes, siteRes] = await Promise.all([
+      apiClient.get('/podcast/episodes'),
+      apiClient.get('/site-info')
+    ])
+    episodes.value = episodesRes.data
+    churchName.value = siteRes.data.churchName
   } catch (err) {
     error.value = 'Failed to load podcast episodes. Please try again later.'
     console.error(err)
@@ -56,7 +61,7 @@ onMounted(async () => {
     <div class="q-mb-lg">
       <h1 class="text-h4 q-mb-sm">Sermons & Podcast</h1>
       <p class="text-body1 text-grey-7">
-        Listen to recent sermons from Bethlehem Haven Primitive Baptist Church.
+        Listen to recent sermons from {{ churchName }}.
         You can also subscribe to our podcast feed.
       </p>
       <q-btn
