@@ -72,11 +72,24 @@ function logout() {
   <q-page padding>
     <q-card>
       <q-card-section class="row items-center justify-between">
-        <div class="text-h5">Manage Pages</div>
+        <div class="text-h5">Admin Dashboard</div>
         <div class="q-gutter-sm">
-          <q-btn label="Create New Page" color="positive" @click="createPage" />
           <q-btn label="Logout" color="negative" flat @click="logout" />
         </div>
+      </q-card-section>
+      <q-separator />
+      <q-card-section>
+        <div class="row q-gutter-md">
+          <q-btn label="Manage Pages" color="primary" @click="router.push('/admin')" />
+          <q-btn label="Manage Podcast" color="primary" @click="router.push('/admin/podcast')" />
+        </div>
+      </q-card-section>
+    </q-card>
+
+    <q-card class="q-mt-md">
+      <q-card-section class="row items-center justify-between">
+        <div class="text-h6">Pages</div>
+        <q-btn label="Create New Page" color="positive" size="sm" @click="createPage" />
       </q-card-section>
       <q-separator />
       <q-card-section>

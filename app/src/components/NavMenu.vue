@@ -41,6 +41,11 @@ function goAdmin() {
   router.push('/admin')
 }
 
+function goPodcast() {
+  drawerOpen.value = false
+  router.push('/podcast')
+}
+
 function goLogin() {
   drawerOpen.value = false
   router.push('/login')
@@ -94,6 +99,16 @@ function logout() {
           :aria-current="route.params.slug === item.slug ? 'page' : undefined"
         >
           {{ item.navTitle }}
+        </q-btn>
+        <q-btn
+          flat
+          dense
+          class="q-ml-sm"
+          :class="currentRouteName === 'podcast' ? 'bg-white text-dark' : 'text-white'"
+          @click="goPodcast"
+          aria-label="Podcast"
+        >
+          Podcast
         </q-btn>
         <q-btn
           v-if="authStore.userRole === 'Admin'"
@@ -162,6 +177,16 @@ function logout() {
         :aria-label="item.navTitle"
       >
         <q-item-section>{{ item.navTitle }}</q-item-section>
+      </q-item>
+      <q-item
+        clickable
+        v-ripple
+        @click="goPodcast"
+        :active="currentRouteName === 'podcast'"
+        role="menuitem"
+        aria-label="Podcast"
+      >
+        <q-item-section>Podcast</q-item-section>
       </q-item>
       <q-separator />
       <q-item
