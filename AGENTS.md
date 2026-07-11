@@ -19,7 +19,7 @@ church_website/
 └── app/                     # Vue 3 frontend
     ├── src/
     │   ├── views/             # Page views
-    │   ├── components/        # Shared components (NavMenu)
+    │   ├── components/        # Shared components (NavMenu, ImageUploadHelper)
     │   ├── stores/            # Pinia stores (auth)
     │   ├── router/            # Vue Router
     │   └── api/               # Axios client
@@ -31,7 +31,7 @@ church_website/
 - **Backend:** .NET 10, FastEndpoints v8, Dapper, PostgreSQL, JWT authentication, BCrypt
 - **Frontend:** Vue 3 (Composition API), TypeScript, Vite, Quasar v2, Pinia, Axios, `marked` for Markdown rendering
 - **Database:** PostgreSQL 16 (Docker container)
-- **Dev Proxy:** Vite forwards `/api` → `http://localhost:5001`
+- **Dev Proxy:** Vite forwards `/api` and `/uploads` → `http://localhost:5001`
 
 ## Development Workflow
 
@@ -94,6 +94,7 @@ npm run dev
 | POST | `/api/pages` | Admin | Create page |
 | PUT | `/api/pages/{slug}` | Admin | Update page |
 | DELETE | `/api/pages/{slug}` | Admin | Delete page |
+| POST | `/api/images` | Admin | Upload image (returns public URL) |
 | GET | `/api/admin/dashboard` | Admin | Admin dashboard stub |
 
 ## Frontend Routes
@@ -125,6 +126,7 @@ Lowercase → Remove special chars → Replace spaces with hyphens → Collapse 
 - `marked` package converts Markdown → HTML on the frontend
 - `v-html` renders the result
 - HomeView uses a computed `renderedBody` property
+- Images are uploaded via `POST /api/images` and inserted with standard Markdown syntax `![alt](url)` or HTML `<img>`
 
 ### Nav Menu
 - `GET /api/pages/nav` filters: `ShowInNav = true AND IsPublished = true`
@@ -181,7 +183,7 @@ The application is designed to be deployed for any church or small organization 
 
 - **Church name:** `Site:ChurchName` in `appsettings.json` (returned by `GET /api/site-info`)
 - **Podcast metadata:** `Podcast:Title`, `Podcast:Description`, `Podcast:Author`, `Podcast:BaseUrl` in `appsettings.json`
-- **Storage paths:** `Storage:AudioPath` and `Storage:PublicPath` in `appsettings.json`
+- **Storage paths:** `Storage:AudioPath`, `Storage:PublicPath`, `Storage:ImagesPath`, and `Storage:ImagesPublicPath` in `appsettings.json`
 - **Database connection:** `ConnectionStrings:DefaultConnection` in `appsettings.json`
 
 When onboarding a new church, only `appsettings.json` (or environment-specific overrides) need to be updated. No frontend or backend code should be modified for rebranding.

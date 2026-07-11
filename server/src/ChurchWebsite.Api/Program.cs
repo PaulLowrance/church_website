@@ -47,12 +47,19 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Ensure storage path is absolute before registering services
+// Ensure storage paths are absolute before registering services
 var uploadsPath = builder.Configuration["Storage:AudioPath"] ?? "uploads/audio";
 if (!Path.IsPathRooted(uploadsPath))
 {
     uploadsPath = Path.Combine(builder.Environment.ContentRootPath, uploadsPath);
     builder.Configuration["Storage:AudioPath"] = uploadsPath;
+}
+
+var imagesPath = builder.Configuration["Storage:ImagesPath"] ?? "uploads/images";
+if (!Path.IsPathRooted(imagesPath))
+{
+    imagesPath = Path.Combine(builder.Environment.ContentRootPath, imagesPath);
+    builder.Configuration["Storage:ImagesPath"] = imagesPath;
 }
 
 // Infrastructure services (DB, repositories, auth)
@@ -84,6 +91,15 @@ app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(staticFilesPath),
     RequestPath = "/uploads/audio"
+});
+
+// Serve uploaded images
+var imagesStaticFilesPath = app.Configuration["Storage:ImagesPath"] ?? "uploads/images";
+Directory.CreateDirectory(imagesStaticFilesPath);
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(imagesStaticFilesPath),
+    RequestPath = "/uploads/images"
 });
 
 app.UseFastEndpoints();
