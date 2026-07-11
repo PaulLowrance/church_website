@@ -67,8 +67,17 @@ watch(() => route.params.slug, (newSlug) => {
       </q-card-section>
       <q-separator />
       <q-card-section>
-        <div v-html="renderedBody"></div>
+        <div class="page-content" v-html="renderedBody"></div>
       </q-card-section>
     </q-card>
   </q-page>
 </template>
+
+<style scoped>
+.page-content :deep(img) {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1rem 0;
+}
+</style>

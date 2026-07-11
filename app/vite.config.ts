@@ -27,6 +27,10 @@ export default defineConfig({
       '/podcast/rss': {
         target: 'http://localhost:5001',
         changeOrigin: true
+      },
+      '/uploads': {
+        target: 'http://localhost:5001',
+        changeOrigin: true
       }
     }
   }

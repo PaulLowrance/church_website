@@ -5,4 +5,8 @@ public interface IFileStorageService
     Task<string> SaveAudioFileAsync(Stream fileStream, string fileName, CancellationToken ct = default);
     Task DeleteAudioFileAsync(string filePath, CancellationToken ct = default);
     string GetPublicUrl(string filePath);
+
+    Task<string> SaveImageFileAsync(Stream fileStream, string fileName, CancellationToken ct = default);
+    Task DeleteImageFileAsync(string filePath, CancellationToken ct = default);
+    string GetImagePublicUrl(string filePath);
 }

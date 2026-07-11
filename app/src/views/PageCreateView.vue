@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { marked } from 'marked'
 import apiClient from '@/api/client'
+import { uploadImage } from '@/api/images'
+import ImageUploadHelper from '@/components/ImageUploadHelper.vue'
 
 const router = useRouter()
 
@@ -19,6 +21,9 @@ const titleError = ref('')
 const bodyError = ref('')
 const slugError = ref('')
 const navTitleWarning = ref('')
+
+const editorRef = ref<any>(null)
+const bodyInputRef = ref<any>(null)
 
 const previewHtml = computed(() => {
   if (contentType.value === 'markdown') {
@@ -110,6 +115,63 @@ async function savePage() {
 function goBack() {
   router.push('/admin')
 }
+
+async function handleEditorPaste(evt: ClipboardEvent) {
+  const items = evt.clipboardData?.items
+  if (!items) return
+
+  const imageFiles: File[] = []
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i]
+    if (item.kind === 'file' && item.type.startsWith('image/')) {
+      const file = item.getAsFile()
+      if (file) imageFiles.push(file)
+    }
+  }
+
+  if (imageFiles.length === 0) return
+
+  evt.preventDefault()
+  for (const file of imageFiles) {
+    try {
+      const url = await uploadImage(file)
+      insertWysiwygSnippet(`<img src="${url}" alt="Image" style="max-width:100%;height:auto;">`)
+    } catch (err) {
+      error.value = 'Failed to upload pasted image'
+      console.error(err)
+    }
+  }
+}
+
+function insertWysiwygSnippet(snippet: string) {
+  editorRef.value?.runCmd?.('insertHTML', snippet)
+}
+
+function insertTextSnippet(snippet: string) {
+  const el = bodyInputRef.value?.getNativeElement?.() as HTMLTextAreaElement | undefined
+  if (el) {
+    const start = el.selectionStart ?? 0
+    const end = el.selectionEnd ?? 0
+    const before = body.value.slice(0, start)
+    const after = body.value.slice(end)
+    body.value = before + snippet + after
+    nextTick(() => {
+      el.focus()
+      const newPos = start + snippet.length
+      el.setSelectionRange(newPos, newPos)
+    })
+  } else {
+    body.value += snippet
+  }
+}
+
+function handleInsertImage(snippet: string) {
+  if (contentType.value === 'wysiwyg') {
+    insertWysiwygSnippet(snippet)
+  } else {
+    insertTextSnippet(snippet)
+  }
+}
 </script>
 
 <template>
@@ -189,23 +251,32 @@ function goBack() {
             <div class="text-subtitle2 q-mb-sm">Body Content *</div>
             <q-editor
               v-if="contentType === 'wysiwyg'"
+              ref="editorRef"
               v-model="body"
               min-height="300px"
+              content-style="img { max-width: 100%; height: auto; }"
               :toolbar="[
                 ['bold', 'italic', 'strike', 'underline'],
                 ['unordered', 'ordered'],
-                ['link'],
+                ['link', 'image'],
+                ['left', 'center', 'right', 'justify'],
                 ['undo', 'redo']
               ]"
+              @paste="handleEditorPaste"
             />
             <div v-else class="row q-col-gutter-md">
               <div class="col-12 col-md-6">
                 <q-input
+                  ref="bodyInputRef"
                   v-model="body"
                   type="textarea"
                   outlined
                   rows="15"
                   :label="contentType === 'markdown' ? 'Markdown Content' : 'HTML Content'"
+                />
+                <ImageUploadHelper
+                  :content-type="contentType"
+                  @insert="handleInsertImage"
                 />
               </div>
               <div class="col-12 col-md-6">
@@ -220,6 +291,11 @@ function goBack() {
                 </q-card>
               </div>
             </div>
+            <ImageUploadHelper
+              v-if="contentType === 'wysiwyg'"
+              :content-type="contentType"
+              @insert="handleInsertImage"
+            />
             <div v-if="bodyError" class="text-negative q-mt-xs">{{ bodyError }}</div>
           </div>
 
