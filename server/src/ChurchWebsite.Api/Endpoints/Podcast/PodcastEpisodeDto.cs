@@ -17,6 +17,9 @@ public class PodcastEpisodeDto
     public string AudioContentType { get; set; } = string.Empty;
     public DateTime PublishedAt { get; set; }
     public DateTime CreatedAt { get; set; }
+    public string TranscriptStatus { get; set; } = "none";
+    public string? TranscriptUrl { get; set; }
+    public string? TranscriptError { get; set; }
     public List<string> Tags { get; set; } = [];
 }
 
@@ -37,6 +40,11 @@ public static class PodcastEpisodeMapper
             AudioContentType = episode.AudioContentType,
             PublishedAt = episode.PublishedAt,
             CreatedAt = episode.CreatedAt,
+            TranscriptStatus = episode.TranscriptStatus,
+            TranscriptUrl = episode.TranscriptStatus == "completed" && !string.IsNullOrWhiteSpace(episode.TranscriptFilePath)
+                ? fileStorage.GetTranscriptPublicUrl(episode.TranscriptFilePath)
+                : null,
+            TranscriptError = episode.TranscriptError,
             Tags = episode.Tags
         };
     }

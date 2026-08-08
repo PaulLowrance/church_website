@@ -50,13 +50,27 @@ public class PodcastRssEndpoint(IPodcastEpisodeRepository repo, IFileStorageServ
                         audioUrl = baseUrl.TrimEnd('/') + audioUrl;
                     }
 
+                    var itemDescription = episode.Description ?? episode.Title;
+                    var transcriptUrl = episode.TranscriptStatus == "completed"
+                        && !string.IsNullOrWhiteSpace(episode.TranscriptFilePath)
+                        ? fileStorage.GetTranscriptPublicUrl(episode.TranscriptFilePath)
+                        : null;
+
+                    if (!string.IsNullOrWhiteSpace(transcriptUrl))
+                    {
+                        var absoluteTranscriptUrl = transcriptUrl.StartsWith("http")
+                            ? transcriptUrl
+                            : baseUrl.TrimEnd('/') + transcriptUrl;
+                        itemDescription += $"\n\nTranscript (download): {absoluteTranscriptUrl}";
+                    }
+
                     var item = new XElement("item",
                         new XElement("title", episode.Title),
                         new XElement("pubDate", episode.PublishedAt.ToString("r")),
                         new XElement("guid", $"{baseUrl.TrimEnd('/')}/podcast/episodes/{episode.Id}"),
-                        new XElement("description", episode.Description ?? episode.Title),
+                        new XElement("description", itemDescription),
                         new XElement("{http://www.itunes.com/dtds/podcast-1.0.dtd}author", author),
-                        new XElement("{http://www.itunes.com/dtds/podcast-1.0.dtd}summary", episode.Description ?? episode.Title),
+                        new XElement("{http://www.itunes.com/dtds/podcast-1.0.dtd}summary", itemDescription),
                         new XElement("{http://www.itunes.com/dtds/podcast-1.0.dtd}duration", ""),
                         new XElement("enclosure",
                             new XAttribute("url", audioUrl),

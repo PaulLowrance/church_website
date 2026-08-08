@@ -62,6 +62,13 @@ if (!Path.IsPathRooted(imagesPath))
     builder.Configuration["Storage:ImagesPath"] = imagesPath;
 }
 
+var transcriptsPath = builder.Configuration["Storage:TranscriptPath"] ?? "uploads/transcripts";
+if (!Path.IsPathRooted(transcriptsPath))
+{
+    transcriptsPath = Path.Combine(builder.Environment.ContentRootPath, transcriptsPath);
+    builder.Configuration["Storage:TranscriptPath"] = transcriptsPath;
+}
+
 // Infrastructure services (DB, repositories, auth)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
@@ -100,6 +107,15 @@ app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(imagesStaticFilesPath),
     RequestPath = "/uploads/images"
+});
+
+// Serve generated transcripts
+var transcriptsStaticFilesPath = app.Configuration["Storage:TranscriptPath"] ?? "uploads/transcripts";
+Directory.CreateDirectory(transcriptsStaticFilesPath);
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(transcriptsStaticFilesPath),
+    RequestPath = "/uploads/transcripts"
 });
 
 app.UseFastEndpoints();

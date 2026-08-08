@@ -83,6 +83,17 @@ npm run dev
 - `NavTitle` (string, max 25 chars, defaults to title)
 - `UpdatedAt`
 
+### PodcastEpisode
+- `Id` (UUID)
+- `Title`, `SpeakerName`, `Description` (nullable), `SeriesName` (nullable)
+- `AudioFilePath`, `AudioFileName`, `AudioFileSize`, `AudioContentType`
+- `PublishedAt`, `CreatedAt`, `UpdatedAt`
+- `TranscriptStatus` (`none | queued | processing | completed | error`)
+- `TranscriptFilePath` (path to generated `.txt`)
+- `AssemblyAiTranscriptId` (AssemblyAI job id for polling)
+- `TranscriptError` (nullable)
+- `Tags` (many-to-many via `episode_tags`)
+
 ## API Endpoints
 
 | Method | Path | Access | Purpose |
@@ -95,6 +106,12 @@ npm run dev
 | PUT | `/api/pages/{slug}` | Admin | Update page |
 | DELETE | `/api/pages/{slug}` | Admin | Delete page |
 | POST | `/api/images` | Admin | Upload image (returns public URL) |
+| GET | `/api/podcast/episodes` | Anonymous | List published episodes |
+| GET | `/api/podcast/episodes/{id}` | Anonymous | Get single episode |
+| POST | `/api/podcast/episodes` | Admin | Create episode (triggers transcription) |
+| PUT | `/api/podcast/episodes/{id}` | Admin | Update episode (re-transcribes if audio replaced) |
+| DELETE | `/api/podcast/episodes/{id}` | Admin | Delete episode |
+| GET | `/podcast/rss` | Anonymous | Podcast RSS feed |
 | GET | `/api/admin/dashboard` | Admin | Admin dashboard stub |
 
 ## Frontend Routes
@@ -139,6 +156,18 @@ Lowercase → Remove special chars → Replace spaces with hyphens → Collapse 
 - Admins can view unpublished pages with an orange banner warning
 - `GetPageEndpoint` checks `User.Identity?.IsAuthenticated`
 
+### Sermon Transcription Pipeline (AssemblyAI)
+- On episode create (or audio replacement on update), the backend submits the audio to AssemblyAI and stores the transcript id + `transcript_status` (`none | queued | processing | completed | error`) on the episode.
+- `TranscriptionProcessingService` (a `BackgroundService` in Infrastructure) polls AssemblyAI every `AssemblyAI:PollIntervalSeconds`. On completion it:
+  1. Writes the full transcript to a `.txt` file in `Storage:TranscriptPath` (served at `/uploads/transcripts`).
+  2. Sets the AssemblyAI summary as the episode description **only if description is empty**.
+  3. Marks status `completed` (or `error` with a message).
+- Transcript is exposed on the public podcast page as viewable + downloadable text. The RSS feed references it **only as a download link** in the item description — never inline.
+- Summary generation uses the **LLM Gateway** API (the legacy `summarization`/`summary_type` transcript params are deprecated). See `AssemblyAITranscriptionService`.
+- Auth header is the raw AssemblyAI key with **no `Bearer` prefix** (both STT and LLM Gateway). `/v2/upload` takes **raw binary**, not multipart.
+- No official .NET SDK exists → raw HTTP via `HttpClient` (named client `"AssemblyAI"` registered with `AddHttpClient`).
+- **Never commit `AssemblyAI:ApiKey`.** Supply via env var (`AssemblyAI__ApiKey`) or user-secrets.
+
 ## Decision Log
 
 1. **Custom JWT (not Identity):** Faster bootstrap, Dapper-friendly. Using `System.IdentityModel.Tokens.Jwt` + `BCrypt.Net-Next`.
@@ -146,6 +175,9 @@ Lowercase → Remove special chars → Replace spaces with hyphens → Collapse 
 3. **Vite proxy (not CORS):** Avoids CORS issues during local development. Proxy config in `vite.config.ts`.
 4. **FastEndpoints v8:** Response methods accessed via `Send.OkAsync()`, `Send.NotFoundAsync()`, etc. (not `SendAsync()`).
 5. **No docker compose for app yet:** Deferred per user request. Only PostgreSQL container in `docker-compose.yml`.
+6. **AssemblyAI polling (not webhook):** `BackgroundService` polls `GET /v2/transcript/{id}`. No public URL needed, survives restarts, state persisted in DB.
+7. **LLM Gateway for summaries (not `summarization` param):** The transcript-level `summarization`/`summary_type`/`auto_chapters` params are deprecated. Summaries come from a second call to the LLM Gateway chat-completions API after transcription completes.
+8. **Raw HTTP (not SDK):** AssemblyAI ships Python/Node SDKs only; no .NET SDK, so the API is called directly via `HttpClient`.
 
 ## Common Gotchas
 
@@ -154,6 +186,7 @@ Lowercase → Remove special chars → Replace spaces with hyphens → Collapse 
 - **Vue Router dynamic route order:** `/:slug` must be AFTER all explicit routes (`/login`, `/admin`, etc.).
 - **Node version:** Requires Node 22+ for latest Vite/Quasar packages.
 - **Dapper + snake_case:** Always enable `MatchNamesWithUnderscores` or properties won't map.
+- **AssemblyAI docs change often:** Before writing AssemblyAI code, read https://www.assemblyai.com/docs/agent-instructions.md and https://www.assemblyai.com/docs/llms.txt. Don't rely on memorized parameter names.
 
 ## Code Style
 
@@ -183,7 +216,8 @@ The application is designed to be deployed for any church or small organization 
 
 - **Church name:** `Site:ChurchName` in `appsettings.json` (returned by `GET /api/site-info`)
 - **Podcast metadata:** `Podcast:Title`, `Podcast:Description`, `Podcast:Author`, `Podcast:BaseUrl` in `appsettings.json`
-- **Storage paths:** `Storage:AudioPath`, `Storage:PublicPath`, `Storage:ImagesPath`, and `Storage:ImagesPublicPath` in `appsettings.json`
+- **Storage paths:** `Storage:AudioPath`, `Storage:PublicPath`, `Storage:ImagesPath`, `Storage:ImagesPublicPath`, `Storage:TranscriptPath`, and `Storage:TranscriptPublicPath` in `appsettings.json`
+- **Transcription:** `AssemblyAI:ApiKey` (secret, env var), `AssemblyAI:BaseUrl`, `AssemblyAI:LlmGatewayUrl`, `AssemblyAI:LlmModel`, `AssemblyAI:SummaryPrompt` in `appsettings.json`
 - **Database connection:** `ConnectionStrings:DefaultConnection` in `appsettings.json`
 
 When onboarding a new church, only `appsettings.json` (or environment-specific overrides) need to be updated. No frontend or backend code should be modified for rebranding.

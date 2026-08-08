@@ -53,12 +53,27 @@ public class PodcastEpisodeRepository(DbConnectionFactory factory) : IPodcastEpi
         return episodes;
     }
 
+    public async Task<IEnumerable<PodcastEpisode>> GetByTranscriptStatusAsync(string status)
+    {
+        using var conn = factory.CreateConnection();
+        var episodes = await conn.QueryAsync<PodcastEpisode>(
+            "SELECT * FROM podcast_episodes WHERE transcript_status = @status ORDER BY created_at ASC",
+            new { status });
+
+        foreach (var episode in episodes)
+        {
+            episode.Tags = (await GetTagsAsync(episode.Id)).ToList();
+        }
+
+        return episodes;
+    }
+
     public async Task CreateAsync(PodcastEpisode episode)
     {
         using var conn = factory.CreateConnection();
         await conn.ExecuteAsync(
-            @"INSERT INTO podcast_episodes (id, title, speaker_name, description, series_name, audio_file_path, audio_file_name, audio_file_size, audio_content_type, published_at, created_at, updated_at)
-              VALUES (@Id, @Title, @SpeakerName, @Description, @SeriesName, @AudioFilePath, @AudioFileName, @AudioFileSize, @AudioContentType, @PublishedAt, @CreatedAt, @UpdatedAt)",
+            @"INSERT INTO podcast_episodes (id, title, speaker_name, description, series_name, audio_file_path, audio_file_name, audio_file_size, audio_content_type, published_at, created_at, updated_at, transcript_status, transcript_file_path, assemblyai_transcript_id, transcript_error)
+              VALUES (@Id, @Title, @SpeakerName, @Description, @SeriesName, @AudioFilePath, @AudioFileName, @AudioFileSize, @AudioContentType, @PublishedAt, @CreatedAt, @UpdatedAt, @TranscriptStatus, @TranscriptFilePath, @AssemblyAiTranscriptId, @TranscriptError)",
             episode);
 
         await SetTagsAsync(episode.Id, episode.Tags);
@@ -68,7 +83,7 @@ public class PodcastEpisodeRepository(DbConnectionFactory factory) : IPodcastEpi
     {
         using var conn = factory.CreateConnection();
         await conn.ExecuteAsync(
-            @"UPDATE podcast_episodes SET title = @Title, speaker_name = @SpeakerName, description = @Description, series_name = @SeriesName, audio_file_path = @AudioFilePath, audio_file_name = @AudioFileName, audio_file_size = @AudioFileSize, audio_content_type = @AudioContentType, published_at = @PublishedAt, updated_at = @UpdatedAt WHERE id = @Id",
+            @"UPDATE podcast_episodes SET title = @Title, speaker_name = @SpeakerName, description = @Description, series_name = @SeriesName, audio_file_path = @AudioFilePath, audio_file_name = @AudioFileName, audio_file_size = @AudioFileSize, audio_content_type = @AudioContentType, published_at = @PublishedAt, updated_at = @UpdatedAt, transcript_status = @TranscriptStatus, transcript_file_path = @TranscriptFilePath, assemblyai_transcript_id = @AssemblyAiTranscriptId, transcript_error = @TranscriptError WHERE id = @Id",
             episode);
 
         await SetTagsAsync(episode.Id, episode.Tags);

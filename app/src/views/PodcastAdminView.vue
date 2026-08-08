@@ -14,6 +14,8 @@ interface PodcastEpisode {
   audioFileSize: number
   publishedAt: string
   createdAt: string
+  transcriptStatus: string
+  transcriptError: string | null
   tags: string[]
 }
 
@@ -42,6 +44,35 @@ function formatFileSize(bytes: number): string {
   const sizes = ['Bytes', 'KB', 'MB', 'GB']
   const i = Math.floor(Math.log(bytes) / Math.log(k))
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+}
+
+function transcriptStatusLabel(status: string): string {
+  switch (status) {
+    case 'queued':
+      return 'Queued'
+    case 'processing':
+      return 'Transcribing'
+    case 'completed':
+      return 'Completed'
+    case 'error':
+      return 'Error'
+    default:
+      return 'None'
+  }
+}
+
+function transcriptStatusColor(status: string): string {
+  switch (status) {
+    case 'completed':
+      return 'positive'
+    case 'processing':
+    case 'queued':
+      return 'amber'
+    case 'error':
+      return 'negative'
+    default:
+      return 'grey'
+  }
 }
 
 onMounted(async () => {
@@ -101,6 +132,7 @@ async function doDelete() {
             { name: 'series', label: 'Series', field: 'seriesName', align: 'left' },
             { name: 'published', label: 'Published At', field: 'publishedAt', align: 'left' },
             { name: 'size', label: 'File Size', field: 'audioFileSize', align: 'right' },
+            { name: 'transcript', label: 'Transcript', field: 'transcriptStatus', align: 'left' },
             { name: 'actions', label: 'Actions', field: 'actions', align: 'center' }
           ]"
           row-key="id"
@@ -122,6 +154,22 @@ async function doDelete() {
           <template v-slot:body-cell-size="props">
             <q-td :props="props">
               {{ formatFileSize(props.row.audioFileSize) }}
+            </q-td>
+          </template>
+          <template v-slot:body-cell-transcript="props">
+            <q-td :props="props">
+              <div>
+                <q-chip
+                  :color="transcriptStatusColor(props.row.transcriptStatus)"
+                  text-color="white"
+                  dense
+                  size="sm"
+                  :label="transcriptStatusLabel(props.row.transcriptStatus)"
+                />
+                <q-tooltip v-if="props.row.transcriptError">
+                  {{ props.row.transcriptError }}
+                </q-tooltip>
+              </div>
             </q-td>
           </template>
           <template v-slot:body-cell-actions="props">

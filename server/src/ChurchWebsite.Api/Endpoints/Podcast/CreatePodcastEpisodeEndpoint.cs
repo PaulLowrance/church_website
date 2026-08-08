@@ -23,7 +23,9 @@ public class CreatePodcastEpisodeResponse
 
 public class CreatePodcastEpisodeEndpoint(
     IPodcastEpisodeRepository repo,
-    IFileStorageService fileStorage) : Endpoint<CreatePodcastEpisodeRequest, CreatePodcastEpisodeResponse>
+    IFileStorageService fileStorage,
+    ITranscriptionService transcription,
+    ILogger<CreatePodcastEpisodeEndpoint> logger) : Endpoint<CreatePodcastEpisodeRequest, CreatePodcastEpisodeResponse>
 {
     public override void Configure()
     {
@@ -75,11 +77,38 @@ public class CreatePodcastEpisodeEndpoint(
 
         await repo.CreateAsync(episode);
 
+        await SubmitTranscriptionAsync(episode, transcription, repo, logger, ct);
+
         await Send.OkAsync(new CreatePodcastEpisodeResponse
         {
             Id = episode.Id,
             Title = episode.Title
         }, cancellation: ct);
+    }
+
+    private static async Task SubmitTranscriptionAsync(
+        PodcastEpisode episode,
+        ITranscriptionService transcription,
+        IPodcastEpisodeRepository repo,
+        ILogger logger,
+        CancellationToken ct)
+    {
+        try
+        {
+            var transcriptId = await transcription.SubmitAsync(episode.AudioFilePath, ct);
+            episode.AssemblyAiTranscriptId = transcriptId;
+            episode.TranscriptStatus = "queued";
+            episode.TranscriptError = null;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to submit transcription for episode {EpisodeId}", episode.Id);
+            episode.TranscriptStatus = "error";
+            episode.TranscriptError = $"Transcription submission failed: {ex.Message}";
+        }
+
+        episode.UpdatedAt = DateTime.UtcNow;
+        await repo.UpdateAsync(episode);
     }
 
     private static List<string> ParseTags(string? tagsInput)

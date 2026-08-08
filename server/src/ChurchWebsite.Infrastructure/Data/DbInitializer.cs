@@ -47,7 +47,11 @@ public class DbInitializer(DbConnectionFactory factory)
                 audio_content_type VARCHAR(100) NOT NULL DEFAULT 'audio/mpeg',
                 published_at TIMESTAMP WITH TIME ZONE NOT NULL,
                 created_at TIMESTAMP WITH TIME ZONE NOT NULL,
-                updated_at TIMESTAMP WITH TIME ZONE NOT NULL
+                updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
+                transcript_status VARCHAR(20) NOT NULL DEFAULT 'none',
+                transcript_file_path TEXT,
+                assemblyai_transcript_id VARCHAR(64),
+                transcript_error TEXT
             );";
         await conn.ExecuteAsync(createPodcastEpisodesSql);
 
@@ -59,11 +63,11 @@ public class DbInitializer(DbConnectionFactory factory)
             );";
         await conn.ExecuteAsync(createEpisodeTagsSql);
 
-        await MigrateColumnAsync(conn, "is_published", "BOOLEAN NOT NULL DEFAULT TRUE");
-        await MigrateColumnAsync(conn, "show_in_nav", "BOOLEAN NOT NULL DEFAULT TRUE");
-        await MigrateColumnAsync(conn, "nav_title", "VARCHAR(25) NOT NULL DEFAULT ''");
+        await MigrateColumnAsync(conn, "pages", "is_published", "BOOLEAN NOT NULL DEFAULT TRUE");
+        await MigrateColumnAsync(conn, "pages", "show_in_nav", "BOOLEAN NOT NULL DEFAULT TRUE");
+        await MigrateColumnAsync(conn, "pages", "nav_title", "VARCHAR(25) NOT NULL DEFAULT ''");
 
-        var contentTypeAdded = await MigrateColumnAsync(conn, "content_type", "VARCHAR(20) NOT NULL DEFAULT 'wysiwyg'");
+        var contentTypeAdded = await MigrateColumnAsync(conn, "pages", "content_type", "VARCHAR(20) NOT NULL DEFAULT 'wysiwyg'");
         if (contentTypeAdded)
         {
             await conn.ExecuteAsync(@"
@@ -71,6 +75,11 @@ public class DbInitializer(DbConnectionFactory factory)
                 SET content_type = CASE WHEN is_markdown = TRUE THEN 'markdown' ELSE 'wysiwyg' END
                 WHERE is_markdown IS NOT NULL");
         }
+
+        await MigrateColumnAsync(conn, "podcast_episodes", "transcript_status", "VARCHAR(20) NOT NULL DEFAULT 'none'");
+        await MigrateColumnAsync(conn, "podcast_episodes", "transcript_file_path", "TEXT");
+        await MigrateColumnAsync(conn, "podcast_episodes", "assemblyai_transcript_id", "VARCHAR(64)");
+        await MigrateColumnAsync(conn, "podcast_episodes", "transcript_error", "TEXT");
 
         var adminExists = await conn.QueryFirstOrDefaultAsync<User>(
             "SELECT * FROM users WHERE username = @username", new { username = "admin" });
@@ -119,16 +128,16 @@ public class DbInitializer(DbConnectionFactory factory)
         }
     }
 
-    private static async Task<bool> MigrateColumnAsync(IDbConnection conn, string columnName, string columnDef)
+    private static async Task<bool> MigrateColumnAsync(IDbConnection conn, string tableName, string columnName, string columnDef)
     {
         var exists = await conn.ExecuteScalarAsync<int>(
             @"SELECT COUNT(*) FROM information_schema.columns
-              WHERE table_name = 'pages' AND column_name = @columnName",
-            new { columnName });
+              WHERE table_name = @tableName AND column_name = @columnName",
+            new { tableName, columnName });
         if (exists == 0)
         {
             await conn.ExecuteAsync(
-                $"ALTER TABLE pages ADD COLUMN {columnName} {columnDef};");
+                $"ALTER TABLE {tableName} ADD COLUMN {columnName} {columnDef};");
             return true;
         }
         return false;
