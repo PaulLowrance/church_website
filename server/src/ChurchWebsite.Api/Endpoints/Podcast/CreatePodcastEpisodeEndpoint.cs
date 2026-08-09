@@ -99,6 +99,8 @@ public class CreatePodcastEpisodeEndpoint(
             episode.AssemblyAiTranscriptId = transcriptId;
             episode.TranscriptStatus = "queued";
             episode.TranscriptError = null;
+            episode.SummaryStatus = "none";
+            episode.SummaryError = null;
         }
         catch (Exception ex)
         {

@@ -80,6 +80,8 @@ public class DbInitializer(DbConnectionFactory factory)
         await MigrateColumnAsync(conn, "podcast_episodes", "transcript_file_path", "TEXT");
         await MigrateColumnAsync(conn, "podcast_episodes", "assemblyai_transcript_id", "VARCHAR(64)");
         await MigrateColumnAsync(conn, "podcast_episodes", "transcript_error", "TEXT");
+        await MigrateColumnAsync(conn, "podcast_episodes", "summary_status", "VARCHAR(20) NOT NULL DEFAULT 'none'");
+        await MigrateColumnAsync(conn, "podcast_episodes", "summary_error", "TEXT");
 
         var adminExists = await conn.QueryFirstOrDefaultAsync<User>(
             "SELECT * FROM users WHERE username = @username", new { username = "admin" });

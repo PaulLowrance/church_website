@@ -20,6 +20,8 @@ public class PodcastEpisodeDto
     public string TranscriptStatus { get; set; } = "none";
     public string? TranscriptUrl { get; set; }
     public string? TranscriptError { get; set; }
+    public string SummaryStatus { get; set; } = "none";
+    public string? SummaryError { get; set; }
     public List<string> Tags { get; set; } = [];
 }
 
@@ -45,6 +47,8 @@ public static class PodcastEpisodeMapper
                 ? fileStorage.GetTranscriptPublicUrl(episode.TranscriptFilePath)
                 : null,
             TranscriptError = episode.TranscriptError,
+            SummaryStatus = episode.SummaryStatus,
+            SummaryError = episode.SummaryError,
             Tags = episode.Tags
         };
     }

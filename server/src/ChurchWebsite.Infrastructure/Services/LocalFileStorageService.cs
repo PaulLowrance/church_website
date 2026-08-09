@@ -119,6 +119,16 @@ public class LocalFileStorageService : IFileStorageService
         return $"{_transcriptsPublicPath.TrimEnd('/')}/{fileName}";
     }
 
+    public async Task<string?> ReadTranscriptFileAsync(string filePath, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
+        {
+            return null;
+        }
+
+        return await File.ReadAllTextAsync(filePath, ct);
+    }
+
     private static string MakeUniqueFileName(string fileName)
     {
         var safeFileName = Path.GetFileNameWithoutExtension(fileName)

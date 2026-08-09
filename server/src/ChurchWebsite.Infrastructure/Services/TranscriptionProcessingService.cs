@@ -86,7 +86,7 @@ public class TranscriptionProcessingService(
         }
     }
 
-    private static async Task CompleteAsync(
+    private async Task CompleteAsync(
         PodcastEpisode episode,
         string? text,
         IPodcastEpisodeRepository repo,
@@ -112,23 +112,51 @@ public class TranscriptionProcessingService(
         episode.TranscriptStatus = "completed";
         episode.TranscriptError = null;
         episode.UpdatedAt = DateTime.UtcNow;
+        await repo.UpdateAsync(episode);
 
-        if (string.IsNullOrWhiteSpace(episode.Description))
+        await GenerateSummaryAsync(episode, text, repo, transcription, ct);
+    }
+
+    private async Task GenerateSummaryAsync(
+        PodcastEpisode episode,
+        string text,
+        IPodcastEpisodeRepository repo,
+        ITranscriptionService transcription,
+        CancellationToken ct)
+    {
+        if (!string.IsNullOrWhiteSpace(episode.Description))
         {
-            try
-            {
-                var summary = await transcription.SummarizeAsync(text, ct);
-                if (!string.IsNullOrWhiteSpace(summary))
-                {
-                    episode.Description = summary;
-                }
-            }
-            catch (Exception ex)
-            {
-                episode.TranscriptError = $"Transcript posted, but summary generation failed: {ex.Message}";
-            }
+            return;
         }
 
+        episode.SummaryStatus = "processing";
+        episode.SummaryError = null;
+        episode.UpdatedAt = DateTime.UtcNow;
+        await repo.UpdateAsync(episode);
+
+        try
+        {
+            var summary = await transcription.SummarizeAsync(text, ct);
+            if (!string.IsNullOrWhiteSpace(summary))
+            {
+                episode.Description = summary;
+                episode.SummaryStatus = "completed";
+                episode.SummaryError = null;
+            }
+            else
+            {
+                episode.SummaryStatus = "error";
+                episode.SummaryError = "LLM Gateway returned an empty summary.";
+            }
+        }
+        catch (Exception ex)
+        {
+            episode.SummaryStatus = "error";
+            episode.SummaryError = ex.Message;
+            logger.LogError(ex, "Summary generation failed for episode {EpisodeId}", episode.Id);
+        }
+
+        episode.UpdatedAt = DateTime.UtcNow;
         await repo.UpdateAsync(episode);
     }
 

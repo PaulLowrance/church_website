@@ -16,6 +16,8 @@ interface PodcastEpisode {
   createdAt: string
   transcriptStatus: string
   transcriptError: string | null
+  summaryStatus: string
+  summaryError: string | null
   tags: string[]
 }
 
@@ -27,6 +29,47 @@ const confirmDelete = ref(false)
 const deleteId = ref('')
 const deleteTitle = ref('')
 const deleting = ref(false)
+
+const retryId = ref('')
+const retryTitle = ref('')
+const retryType = ref<'transcription' | 'summary'>('transcription')
+const confirmRetry = ref(false)
+const retrying = ref(false)
+
+async function loadEpisodes() {
+  loading.value = true
+  try {
+    const response = await apiClient.get('/admin/podcast/episodes')
+    episodes.value = response.data
+  } catch (error) {
+    console.error('Failed to load podcast episodes', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+function promptRetry(id: string, title: string, type: 'transcription' | 'summary') {
+  retryId.value = id
+  retryTitle.value = title
+  retryType.value = type
+  confirmRetry.value = true
+}
+
+async function doRetry() {
+  retrying.value = true
+  try {
+    const endpoint = retryType.value === 'transcription'
+      ? `/podcast/episodes/${retryId.value}/retry-transcription`
+      : `/podcast/episodes/${retryId.value}/retry-summary`
+    await apiClient.post(endpoint, {})
+    confirmRetry.value = false
+    await loadEpisodes()
+  } catch (error) {
+    console.error('Failed to retry', error)
+  } finally {
+    retrying.value = false
+  }
+}
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-US', {
@@ -75,16 +118,37 @@ function transcriptStatusColor(status: string): string {
   }
 }
 
-onMounted(async () => {
-  loading.value = true
-  try {
-    const response = await apiClient.get('/admin/podcast/episodes')
-    episodes.value = response.data
-  } catch (error) {
-    console.error('Failed to load podcast episodes', error)
-  } finally {
-    loading.value = false
+function summaryStatusLabel(status: string): string {
+  switch (status) {
+    case 'queued':
+      return 'Summary Queued'
+    case 'processing':
+      return 'Summarizing'
+    case 'completed':
+      return 'Summary Done'
+    case 'error':
+      return 'Summary Error'
+    default:
+      return 'No Summary'
   }
+}
+
+function summaryStatusColor(status: string): string {
+  switch (status) {
+    case 'completed':
+      return 'positive'
+    case 'processing':
+    case 'queued':
+      return 'amber'
+    case 'error':
+      return 'negative'
+    default:
+      return 'grey'
+  }
+}
+
+onMounted(async () => {
+  await loadEpisodes()
 })
 
 function createEpisode() {
@@ -133,6 +197,7 @@ async function doDelete() {
             { name: 'published', label: 'Published At', field: 'publishedAt', align: 'left' },
             { name: 'size', label: 'File Size', field: 'audioFileSize', align: 'right' },
             { name: 'transcript', label: 'Transcript', field: 'transcriptStatus', align: 'left' },
+            { name: 'summary', label: 'Summary', field: 'summaryStatus', align: 'left' },
             { name: 'actions', label: 'Actions', field: 'actions', align: 'center' }
           ]"
           row-key="id"
@@ -172,9 +237,41 @@ async function doDelete() {
               </div>
             </q-td>
           </template>
+          <template v-slot:body-cell-summary="props">
+            <q-td :props="props">
+              <div>
+                <q-chip
+                  :color="summaryStatusColor(props.row.summaryStatus)"
+                  text-color="white"
+                  dense
+                  size="sm"
+                  :label="summaryStatusLabel(props.row.summaryStatus)"
+                />
+                <q-tooltip v-if="props.row.summaryError">
+                  {{ props.row.summaryError }}
+                </q-tooltip>
+              </div>
+            </q-td>
+          </template>
           <template v-slot:body-cell-actions="props">
             <q-td :props="props">
               <div class="q-gutter-xs">
+                <q-btn
+                  v-if="props.row.transcriptStatus === 'error'"
+                  label="Retry Transcription"
+                  color="primary"
+                  size="sm"
+                  flat
+                  @click="promptRetry(props.row.id, props.row.title, 'transcription')"
+                />
+                <q-btn
+                  v-if="props.row.summaryStatus === 'error'"
+                  label="Retry Summary"
+                  color="primary"
+                  size="sm"
+                  flat
+                  @click="promptRetry(props.row.id, props.row.title, 'summary')"
+                />
                 <q-btn
                   label="Edit"
                   color="primary"
@@ -204,6 +301,23 @@ async function doDelete() {
         <q-card-actions align="right">
           <q-btn flat label="Cancel" v-close-popup />
           <q-btn flat label="Delete" color="negative" :loading="deleting" @click="doDelete" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog v-model="confirmRetry" persistent>
+      <q-card>
+        <q-card-section class="row items-center">
+          <q-avatar icon="replay" color="primary" text-color="white" />
+          <span class="q-ml-sm">
+            Retry {{ retryType === 'transcription' ? 'transcription' : 'summarization' }} for
+            "<strong>{{ retryTitle }}</strong>"?<br />
+            <span class="text-caption">This will incur an additional API cost.</span>
+          </span>
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Cancel" v-close-popup />
+          <q-btn flat label="Retry" color="primary" :loading="retrying" @click="doRetry" />
         </q-card-actions>
       </q-card>
     </q-dialog>

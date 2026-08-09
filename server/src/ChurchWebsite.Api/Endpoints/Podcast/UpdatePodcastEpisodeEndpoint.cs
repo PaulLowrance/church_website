@@ -63,6 +63,8 @@ public class UpdatePodcastEpisodeEndpoint(
             }
             episode.TranscriptFilePath = null;
             episode.TranscriptError = null;
+            episode.SummaryStatus = "none";
+            episode.SummaryError = null;
             await SubmitTranscriptionAsync(episode, transcription, repo, logger, ct);
         }
 
@@ -94,6 +96,8 @@ public class UpdatePodcastEpisodeEndpoint(
             episode.AssemblyAiTranscriptId = transcriptId;
             episode.TranscriptStatus = "queued";
             episode.TranscriptError = null;
+            episode.SummaryStatus = "none";
+            episode.SummaryError = null;
         }
         catch (Exception ex)
         {
