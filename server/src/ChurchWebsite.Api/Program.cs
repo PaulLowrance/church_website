@@ -12,6 +12,8 @@ DefaultTypeMap.MatchNamesWithUnderscores = true;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.AddServiceDefaults();
+
 // JWT configuration
 var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key not configured");
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "ChurchWebsite";
@@ -70,7 +72,8 @@ if (!Path.IsPathRooted(transcriptsPath))
 }
 
 // Infrastructure services (DB, repositories, auth)
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+var connectionString = builder.Configuration.GetConnectionString("churchwebsite")
+    ?? builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddInfrastructure(connectionString);
 
@@ -79,6 +82,8 @@ builder.Services.AddFastEndpoints();
 builder.Services.SwaggerDocument();
 
 var app = builder.Build();
+
+app.MapDefaultEndpoints();
 
 // Initialize database schema and seed data
 using (var scope = app.Services.CreateScope())

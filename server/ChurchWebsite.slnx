@@ -4,4 +4,6 @@
     <Project Path="src/ChurchWebsite.Core/ChurchWebsite.Core.csproj" />
     <Project Path="src/ChurchWebsite.Infrastructure/ChurchWebsite.Infrastructure.csproj" />
   </Folder>
+  <Project Path="ChurchWebsite.AppHost/ChurchWebsite.AppHost.csproj" />
+  <Project Path="ChurchWebsite.ServiceDefaults/ChurchWebsite.ServiceDefaults.csproj" />
 </Solution>

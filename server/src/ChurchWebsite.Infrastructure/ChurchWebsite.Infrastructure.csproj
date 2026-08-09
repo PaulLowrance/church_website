@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\..\ChurchWebsite.ServiceDefaults\ChurchWebsite.ServiceDefaults.csproj" />
     <ProjectReference Include="..\ChurchWebsite.Core\ChurchWebsite.Core.csproj" />
   </ItemGroup>
 
