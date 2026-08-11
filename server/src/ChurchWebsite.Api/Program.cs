@@ -14,6 +14,19 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
+// Audio upload limits (Kestrel + multipart form). Keys off Podcast:MaxAudioBytes
+// to keep the request-size ceiling consistent with the per-file validator.
+var maxAudioBytes = int.TryParse(builder.Configuration["Podcast:MaxAudioBytes"], out var b) && b > 0
+    ? b
+    : 524_288_000;
+builder.WebHost.ConfigureKestrel(opts => opts.Limits.MaxRequestBodySize = maxAudioBytes);
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(o =>
+{
+    o.MultipartBodyLengthLimit = maxAudioBytes;
+    o.ValueLengthLimit = int.MaxValue;
+    o.MultipartHeadersLengthLimit = int.MaxValue;
+});
+
 // JWT configuration
 var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key not configured");
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "ChurchWebsite";

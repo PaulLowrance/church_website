@@ -1,5 +1,7 @@
+using ChurchWebsite.Core;
 using ChurchWebsite.Core.Interfaces;
 using FastEndpoints;
+using Microsoft.Extensions.Configuration;
 
 namespace ChurchWebsite.Api.Endpoints.Podcast;
 
@@ -19,6 +21,7 @@ public class UpdatePodcastEpisodeEndpoint(
     IPodcastEpisodeRepository repo,
     IFileStorageService fileStorage,
     ITranscriptionService transcription,
+    IConfiguration configuration,
     ILogger<UpdatePodcastEpisodeEndpoint> logger) : Endpoint<UpdatePodcastEpisodeRequest, PodcastEpisodeDto>
 {
     public override void Configure()
@@ -51,6 +54,19 @@ public class UpdatePodcastEpisodeEndpoint(
 
         if (req.AudioFile is not null && req.AudioFile.Length > 0)
         {
+            var audioOptions = AudioUploadValidator.BuildOptions(configuration);
+            var (audioOk, audioError) = AudioUploadValidator.Validate(
+                req.AudioFile.FileName,
+                req.AudioFile.ContentType,
+                req.AudioFile.Length,
+                audioOptions);
+            if (!audioOk)
+            {
+                AddError(r => r.AudioFile, audioError!);
+                await Send.ErrorsAsync(statusCode: 400, cancellation: ct);
+                return;
+            }
+
             await fileStorage.DeleteAudioFileAsync(episode.AudioFilePath, ct);
             episode.AudioFilePath = await fileStorage.SaveAudioFileAsync(req.AudioFile.OpenReadStream(), req.AudioFile.FileName, ct);
             episode.AudioFileName = req.AudioFile.FileName;
