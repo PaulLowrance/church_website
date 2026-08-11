@@ -20,7 +20,6 @@ public class UpdatePodcastEpisodeRequest
 public class UpdatePodcastEpisodeEndpoint(
     IPodcastEpisodeRepository repo,
     IFileStorageService fileStorage,
-    ITranscriptionService transcription,
     IConfiguration configuration,
     ILogger<UpdatePodcastEpisodeEndpoint> logger) : Endpoint<UpdatePodcastEpisodeRequest, PodcastEpisodeDto>
 {
@@ -52,13 +51,16 @@ public class UpdatePodcastEpisodeEndpoint(
             return;
         }
 
-        if (req.AudioFile is not null && req.AudioFile.Length > 0)
+        var audioReplaced = req.AudioFile is not null && req.AudioFile.Length > 0;
+
+        if (audioReplaced)
         {
+            var audio = req.AudioFile!;
             var audioOptions = AudioUploadValidator.BuildOptions(configuration);
             var (audioOk, audioError) = AudioUploadValidator.Validate(
-                req.AudioFile.FileName,
-                req.AudioFile.ContentType,
-                req.AudioFile.Length,
+                audio.FileName,
+                audio.ContentType,
+                audio.Length,
                 audioOptions);
             if (!audioOk)
             {
@@ -68,20 +70,23 @@ public class UpdatePodcastEpisodeEndpoint(
             }
 
             await fileStorage.DeleteAudioFileAsync(episode.AudioFilePath, ct);
-            episode.AudioFilePath = await fileStorage.SaveAudioFileAsync(req.AudioFile.OpenReadStream(), req.AudioFile.FileName, ct);
-            episode.AudioFileName = req.AudioFile.FileName;
-            episode.AudioFileSize = req.AudioFile.Length;
-            episode.AudioContentType = req.AudioFile.ContentType ?? "audio/mpeg";
+            episode.AudioFilePath = await fileStorage.SaveAudioFileAsync(audio.OpenReadStream(), audio.FileName, ct);
+            episode.AudioFileName = audio.FileName;
+            episode.AudioFileSize = audio.Length;
+            episode.AudioContentType = audio.ContentType ?? "audio/mpeg";
 
             if (!string.IsNullOrWhiteSpace(episode.TranscriptFilePath))
             {
                 await fileStorage.DeleteTranscriptFileAsync(episode.TranscriptFilePath, ct);
             }
             episode.TranscriptFilePath = null;
+            episode.AssemblyAiTranscriptId = null;
             episode.TranscriptError = null;
-            episode.SummaryStatus = "none";
+            episode.TranscriptStatus = TranscriptionStatuses.PendingSubmit;
+            episode.SummaryStatus = TranscriptionStatuses.None;
             episode.SummaryError = null;
-            await SubmitTranscriptionAsync(episode, transcription, repo, logger, ct);
+
+            logger.LogInformation("Episode {EpisodeId} audio replaced; queued for transcription submission.", episode.Id);
         }
 
         episode.Title = req.Title.Trim();
@@ -96,31 +101,10 @@ public class UpdatePodcastEpisodeEndpoint(
 
         await repo.UpdateAsync(episode);
 
-        await Send.OkAsync(PodcastEpisodeMapper.ToDto(episode, fileStorage), cancellation: ct);
-    }
-
-    private static async Task SubmitTranscriptionAsync(
-        ChurchWebsite.Core.Entities.PodcastEpisode episode,
-        ITranscriptionService transcription,
-        IPodcastEpisodeRepository repo,
-        ILogger logger,
-        CancellationToken ct)
-    {
-        try
-        {
-            var transcriptId = await transcription.SubmitAsync(episode.AudioFilePath, ct);
-            episode.AssemblyAiTranscriptId = transcriptId;
-            episode.TranscriptStatus = "queued";
-            episode.TranscriptError = null;
-            episode.SummaryStatus = "none";
-            episode.SummaryError = null;
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Failed to submit transcription for episode {EpisodeId}", episode.Id);
-            episode.TranscriptStatus = "error";
-            episode.TranscriptError = $"Transcription submission failed: {ex.Message}";
-        }
+        await Send.ResponseAsync(
+            PodcastEpisodeMapper.ToDto(episode, fileStorage),
+            StatusCodes.Status202Accepted,
+            cancellation: ct);
     }
 
     private static List<string> ParseTags(string? tagsInput)
