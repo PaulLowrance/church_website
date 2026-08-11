@@ -1,6 +1,8 @@
+using ChurchWebsite.Core;
 using ChurchWebsite.Core.Entities;
 using ChurchWebsite.Core.Interfaces;
 using FastEndpoints;
+using Microsoft.Extensions.Configuration;
 
 namespace ChurchWebsite.Api.Endpoints.Podcast;
 
@@ -25,6 +27,7 @@ public class CreatePodcastEpisodeEndpoint(
     IPodcastEpisodeRepository repo,
     IFileStorageService fileStorage,
     ITranscriptionService transcription,
+    IConfiguration configuration,
     ILogger<CreatePodcastEpisodeEndpoint> logger) : Endpoint<CreatePodcastEpisodeRequest, CreatePodcastEpisodeResponse>
 {
     public override void Configure()
@@ -48,13 +51,21 @@ public class CreatePodcastEpisodeEndpoint(
             return;
         }
 
-        if (req.AudioFile is null || req.AudioFile.Length == 0)
+        var audioOptions = AudioUploadValidator.BuildOptions(configuration);
+        var (audioOk, audioError) = AudioUploadValidator.Validate(
+            req.AudioFile?.FileName,
+            req.AudioFile?.ContentType,
+            req.AudioFile?.Length ?? 0,
+            audioOptions);
+        if (!audioOk)
         {
-            ThrowError("Audio file is required");
+            AddError(r => r.AudioFile, audioError!);
+            await Send.ErrorsAsync(statusCode: 400, cancellation: ct);
             return;
         }
 
-        var filePath = await fileStorage.SaveAudioFileAsync(req.AudioFile.OpenReadStream(), req.AudioFile.FileName, ct);
+        var audio = req.AudioFile!;
+        var filePath = await fileStorage.SaveAudioFileAsync(audio.OpenReadStream(), audio.FileName, ct);
 
         var episode = new PodcastEpisode
         {
@@ -64,9 +75,9 @@ public class CreatePodcastEpisodeEndpoint(
             Description = req.Description?.Trim(),
             SeriesName = req.SeriesName?.Trim(),
             AudioFilePath = filePath,
-            AudioFileName = req.AudioFile.FileName,
-            AudioFileSize = req.AudioFile.Length,
-            AudioContentType = req.AudioFile.ContentType ?? "audio/mpeg",
+            AudioFileName = audio.FileName,
+            AudioFileSize = audio.Length,
+            AudioContentType = audio.ContentType ?? "audio/mpeg",
             PublishedAt = req.PublishedAt.Kind == DateTimeKind.Unspecified
                 ? DateTime.SpecifyKind(req.PublishedAt, DateTimeKind.Utc)
                 : req.PublishedAt.ToUniversalTime(),
