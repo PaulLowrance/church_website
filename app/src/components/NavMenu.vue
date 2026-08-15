@@ -106,9 +106,9 @@ function logout() {
           class="q-ml-sm"
           :class="currentRouteName === 'podcast' ? 'bg-white text-dark' : 'text-white'"
           @click="goPodcast"
-          aria-label="Podcast"
+          aria-label="Sermons"
         >
-          Podcast
+          Sermons
         </q-btn>
         <q-btn
           v-if="authStore.userRole === 'Admin'"
@@ -184,9 +184,9 @@ function logout() {
         @click="goPodcast"
         :active="currentRouteName === 'podcast'"
         role="menuitem"
-        aria-label="Podcast"
+        aria-label="Sermons"
       >
-        <q-item-section>Podcast</q-item-section>
+        <q-item-section>Sermons</q-item-section>
       </q-item>
       <q-separator />
       <q-item

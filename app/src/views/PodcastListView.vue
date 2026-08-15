@@ -91,7 +91,7 @@ onMounted(async () => {
     episodes.value = episodesRes.data
     churchName.value = siteRes.data.churchName
   } catch (err) {
-    error.value = 'Failed to load podcast episodes. Please try again later.'
+    error.value = 'Failed to load sermons. Please try again later.'
     console.error(err)
   } finally {
     loading.value = false
@@ -102,18 +102,18 @@ onMounted(async () => {
 <template>
   <q-page padding>
     <div class="q-mb-lg">
-      <h1 class="text-h4 q-mb-sm">Sermons & Podcast</h1>
+      <h1 class="text-h4 q-mb-sm">Sermons</h1>
       <p class="text-body1 text-grey-7">
         Listen to recent sermons from {{ churchName }}.
-        You can also subscribe to our podcast feed.
+        You can also subscribe to our sermon audio feed.
       </p>
       <q-btn
-        label="Subscribe to Podcast (RSS)"
+        label="Subscribe to Sermons (RSS)"
         color="primary"
         icon="rss_feed"
         href="/podcast/rss"
         target="_blank"
-        aria-label="Subscribe to podcast RSS feed"
+        aria-label="Subscribe to sermons RSS feed"
       />
     </div>
 
