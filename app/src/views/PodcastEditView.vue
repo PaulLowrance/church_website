@@ -15,10 +15,74 @@ const publishedAt = ref('')
 const tags = ref('')
 const audioFile = ref<File | null>(null)
 const currentAudioUrl = ref('')
+const transcriptStatus = ref('')
+const transcriptError = ref('')
+const summaryStatus = ref('')
+const summaryError = ref('')
 
 const loading = ref(true)
 const saving = ref(false)
+const retrying = ref(false)
 const errors = ref<Record<string, string>>({})
+
+function transcriptStatusLabel(status: string): string {
+  switch (status) {
+    case 'queued':
+      return 'Queued'
+    case 'processing':
+      return 'Transcribing'
+    case 'completed':
+      return 'Completed'
+    case 'error':
+      return 'Error'
+    default:
+      return 'None'
+  }
+}
+
+function summaryStatusLabel(status: string): string {
+  switch (status) {
+    case 'queued':
+      return 'Summary Queued'
+    case 'processing':
+      return 'Summarizing'
+    case 'completed':
+      return 'Summary Done'
+    case 'error':
+      return 'Summary Error'
+    default:
+      return 'No Summary'
+  }
+}
+
+async function retryTranscription() {
+  retrying.value = true
+  try {
+    await apiClient.post(`/podcast/episodes/${episodeId}/retry-transcription`, {})
+    transcriptStatus.value = 'queued'
+    transcriptError.value = ''
+  } catch (err: any) {
+    console.error('Failed to retry transcription', err)
+    transcriptError.value = err.response?.data?.message || 'Failed to retry transcription.'
+  } finally {
+    retrying.value = false
+  }
+}
+
+async function retrySummary() {
+  retrying.value = true
+  try {
+    const response = await apiClient.post(`/podcast/episodes/${episodeId}/retry-summary`, {})
+    description.value = response.data.description || ''
+    summaryStatus.value = response.data.summaryStatus || 'completed'
+    summaryError.value = ''
+  } catch (err: any) {
+    console.error('Failed to retry summary', err)
+    summaryError.value = err.response?.data?.message || 'Failed to retry summary.'
+  } finally {
+    retrying.value = false
+  }
+}
 
 onMounted(async () => {
   try {
@@ -31,6 +95,10 @@ onMounted(async () => {
     publishedAt.value = new Date(episode.publishedAt).toISOString().slice(0, 16)
     tags.value = episode.tags.join(', ')
     currentAudioUrl.value = episode.audioUrl
+    transcriptStatus.value = episode.transcriptStatus || 'none'
+    transcriptError.value = episode.transcriptError || ''
+    summaryStatus.value = episode.summaryStatus || 'none'
+    summaryError.value = episode.summaryError || ''
   } catch (error) {
     console.error('Failed to load episode', error)
     errors.value.general = 'Failed to load episode data.'
@@ -174,6 +242,52 @@ function goBack() {
                 <q-icon name="attach_file" />
               </template>
             </q-file>
+          </div>
+
+          <div class="q-mb-md">
+            <div class="text-caption text-grey-7 q-mb-xs">Transcript Status</div>
+            <div class="row items-center q-gutter-sm">
+              <q-chip
+                dense
+                :color="transcriptStatus === 'completed' ? 'positive' : (transcriptStatus === 'error' ? 'negative' : 'grey')"
+                text-color="white"
+                :label="transcriptStatusLabel(transcriptStatus)"
+              />
+              <q-btn
+                v-if="transcriptStatus === 'error'"
+                label="Retry Transcription"
+                color="primary"
+                size="sm"
+                flat
+                :loading="retrying"
+                @click="retryTranscription"
+              />
+            </div>
+            <q-banner v-if="transcriptError" class="bg-negative text-white q-mt-sm" dense>
+              {{ transcriptError }}
+            </q-banner>
+
+            <div class="text-caption text-grey-7 q-mt-md q-mb-xs">Summary Status</div>
+            <div class="row items-center q-gutter-sm">
+              <q-chip
+                dense
+                :color="summaryStatus === 'completed' ? 'positive' : (summaryStatus === 'error' ? 'negative' : 'grey')"
+                text-color="white"
+                :label="summaryStatusLabel(summaryStatus)"
+              />
+              <q-btn
+                v-if="summaryStatus === 'error'"
+                label="Retry Summary"
+                color="primary"
+                size="sm"
+                flat
+                :loading="retrying"
+                @click="retrySummary"
+              />
+            </div>
+            <q-banner v-if="summaryError" class="bg-negative text-white q-mt-sm" dense>
+              {{ summaryError }}
+            </q-banner>
           </div>
 
           <q-banner v-if="errors.general" class="bg-negative text-white q-mb-md" role="alert">

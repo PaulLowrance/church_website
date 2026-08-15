@@ -12,6 +12,21 @@ DefaultTypeMap.MatchNamesWithUnderscores = true;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.AddServiceDefaults();
+
+// Audio upload limits (Kestrel + multipart form). Keys off Podcast:MaxAudioBytes
+// to keep the request-size ceiling consistent with the per-file validator.
+var maxAudioBytes = int.TryParse(builder.Configuration["Podcast:MaxAudioBytes"], out var b) && b > 0
+    ? b
+    : 524_288_000;
+builder.WebHost.ConfigureKestrel(opts => opts.Limits.MaxRequestBodySize = maxAudioBytes);
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(o =>
+{
+    o.MultipartBodyLengthLimit = maxAudioBytes;
+    o.ValueLengthLimit = int.MaxValue;
+    o.MultipartHeadersLengthLimit = int.MaxValue;
+});
+
 // JWT configuration
 var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key not configured");
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "ChurchWebsite";
@@ -62,8 +77,16 @@ if (!Path.IsPathRooted(imagesPath))
     builder.Configuration["Storage:ImagesPath"] = imagesPath;
 }
 
+var transcriptsPath = builder.Configuration["Storage:TranscriptPath"] ?? "uploads/transcripts";
+if (!Path.IsPathRooted(transcriptsPath))
+{
+    transcriptsPath = Path.Combine(builder.Environment.ContentRootPath, transcriptsPath);
+    builder.Configuration["Storage:TranscriptPath"] = transcriptsPath;
+}
+
 // Infrastructure services (DB, repositories, auth)
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+var connectionString = builder.Configuration.GetConnectionString("churchwebsite")
+    ?? builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddInfrastructure(connectionString);
 
@@ -72,6 +95,8 @@ builder.Services.AddFastEndpoints();
 builder.Services.SwaggerDocument();
 
 var app = builder.Build();
+
+app.MapDefaultEndpoints();
 
 // Initialize database schema and seed data
 using (var scope = app.Services.CreateScope())
@@ -100,6 +125,15 @@ app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(imagesStaticFilesPath),
     RequestPath = "/uploads/images"
+});
+
+// Serve generated transcripts
+var transcriptsStaticFilesPath = app.Configuration["Storage:TranscriptPath"] ?? "uploads/transcripts";
+Directory.CreateDirectory(transcriptsStaticFilesPath);
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(transcriptsStaticFilesPath),
+    RequestPath = "/uploads/transcripts"
 });
 
 app.UseFastEndpoints();

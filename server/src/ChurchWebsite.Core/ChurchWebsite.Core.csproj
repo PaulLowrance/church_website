@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\ChurchWebsite.ServiceDefaults\ChurchWebsite.ServiceDefaults.csproj" />
+  </ItemGroup>
+
 </Project>

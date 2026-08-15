@@ -1,5 +1,7 @@
+using ChurchWebsite.Core;
 using ChurchWebsite.Core.Interfaces;
 using FastEndpoints;
+using Microsoft.Extensions.Configuration;
 
 namespace ChurchWebsite.Api.Endpoints.Podcast;
 
@@ -17,7 +19,10 @@ public class UpdatePodcastEpisodeRequest
 
 public class UpdatePodcastEpisodeEndpoint(
     IPodcastEpisodeRepository repo,
-    IFileStorageService fileStorage) : Endpoint<UpdatePodcastEpisodeRequest, PodcastEpisodeDto>
+    IFileStorageService fileStorage,
+    ITranscriptionService transcription,
+    IConfiguration configuration,
+    ILogger<UpdatePodcastEpisodeEndpoint> logger) : Endpoint<UpdatePodcastEpisodeRequest, PodcastEpisodeDto>
 {
     public override void Configure()
     {
@@ -49,11 +54,34 @@ public class UpdatePodcastEpisodeEndpoint(
 
         if (req.AudioFile is not null && req.AudioFile.Length > 0)
         {
+            var audioOptions = AudioUploadValidator.BuildOptions(configuration);
+            var (audioOk, audioError) = AudioUploadValidator.Validate(
+                req.AudioFile.FileName,
+                req.AudioFile.ContentType,
+                req.AudioFile.Length,
+                audioOptions);
+            if (!audioOk)
+            {
+                AddError(r => r.AudioFile, audioError!);
+                await Send.ErrorsAsync(statusCode: 400, cancellation: ct);
+                return;
+            }
+
             await fileStorage.DeleteAudioFileAsync(episode.AudioFilePath, ct);
             episode.AudioFilePath = await fileStorage.SaveAudioFileAsync(req.AudioFile.OpenReadStream(), req.AudioFile.FileName, ct);
             episode.AudioFileName = req.AudioFile.FileName;
             episode.AudioFileSize = req.AudioFile.Length;
             episode.AudioContentType = req.AudioFile.ContentType ?? "audio/mpeg";
+
+            if (!string.IsNullOrWhiteSpace(episode.TranscriptFilePath))
+            {
+                await fileStorage.DeleteTranscriptFileAsync(episode.TranscriptFilePath, ct);
+            }
+            episode.TranscriptFilePath = null;
+            episode.TranscriptError = null;
+            episode.SummaryStatus = "none";
+            episode.SummaryError = null;
+            await SubmitTranscriptionAsync(episode, transcription, repo, logger, ct);
         }
 
         episode.Title = req.Title.Trim();
@@ -69,6 +97,30 @@ public class UpdatePodcastEpisodeEndpoint(
         await repo.UpdateAsync(episode);
 
         await Send.OkAsync(PodcastEpisodeMapper.ToDto(episode, fileStorage), cancellation: ct);
+    }
+
+    private static async Task SubmitTranscriptionAsync(
+        ChurchWebsite.Core.Entities.PodcastEpisode episode,
+        ITranscriptionService transcription,
+        IPodcastEpisodeRepository repo,
+        ILogger logger,
+        CancellationToken ct)
+    {
+        try
+        {
+            var transcriptId = await transcription.SubmitAsync(episode.AudioFilePath, ct);
+            episode.AssemblyAiTranscriptId = transcriptId;
+            episode.TranscriptStatus = "queued";
+            episode.TranscriptError = null;
+            episode.SummaryStatus = "none";
+            episode.SummaryError = null;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to submit transcription for episode {EpisodeId}", episode.Id);
+            episode.TranscriptStatus = "error";
+            episode.TranscriptError = $"Transcription submission failed: {ex.Message}";
+        }
     }
 
     private static List<string> ParseTags(string? tagsInput)

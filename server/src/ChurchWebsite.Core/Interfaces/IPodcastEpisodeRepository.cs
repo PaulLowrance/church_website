@@ -7,6 +7,7 @@ public interface IPodcastEpisodeRepository
     Task<PodcastEpisode?> GetByIdAsync(Guid id);
     Task<IEnumerable<PodcastEpisode>> GetAllAsync();
     Task<IEnumerable<PodcastEpisode>> GetPublishedAsync();
+    Task<IEnumerable<PodcastEpisode>> GetByTranscriptStatusAsync(string status);
     Task CreateAsync(PodcastEpisode episode);
     Task UpdateAsync(PodcastEpisode episode);
     Task DeleteAsync(Guid id);

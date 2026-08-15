@@ -9,6 +9,8 @@ public class LocalFileStorageService : IFileStorageService
     private readonly string _audioPublicPath;
     private readonly string _imagesStoragePath;
     private readonly string _imagesPublicPath;
+    private readonly string _transcriptsStoragePath;
+    private readonly string _transcriptsPublicPath;
 
     private static readonly HashSet<string> AllowedImageExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -23,8 +25,12 @@ public class LocalFileStorageService : IFileStorageService
         _imagesStoragePath = MakeAbsolutePath(configuration["Storage:ImagesPath"] ?? "uploads/images");
         _imagesPublicPath = configuration["Storage:ImagesPublicPath"] ?? "/uploads/images";
 
+        _transcriptsStoragePath = MakeAbsolutePath(configuration["Storage:TranscriptPath"] ?? "uploads/transcripts");
+        _transcriptsPublicPath = configuration["Storage:TranscriptPublicPath"] ?? "/uploads/transcripts";
+
         Directory.CreateDirectory(_audioStoragePath);
         Directory.CreateDirectory(_imagesStoragePath);
+        Directory.CreateDirectory(_transcriptsStoragePath);
     }
 
     private static string MakeAbsolutePath(string path)
@@ -88,6 +94,39 @@ public class LocalFileStorageService : IFileStorageService
     {
         var fileName = Path.GetFileName(filePath);
         return $"{_imagesPublicPath.TrimEnd('/')}/{fileName}";
+    }
+
+    public async Task<string> SaveTranscriptFileAsync(Stream fileStream, string fileName, CancellationToken ct = default)
+    {
+        var uniqueFileName = MakeUniqueFileName(fileName);
+        var filePath = Path.Combine(_transcriptsStoragePath, uniqueFileName);
+
+        await using var outputStream = File.Create(filePath);
+        await fileStream.CopyToAsync(outputStream, ct);
+
+        return filePath;
+    }
+
+    public Task DeleteTranscriptFileAsync(string filePath, CancellationToken ct = default)
+    {
+        DeleteFileIfExists(filePath);
+        return Task.CompletedTask;
+    }
+
+    public string GetTranscriptPublicUrl(string filePath)
+    {
+        var fileName = Path.GetFileName(filePath);
+        return $"{_transcriptsPublicPath.TrimEnd('/')}/{fileName}";
+    }
+
+    public async Task<string?> ReadTranscriptFileAsync(string filePath, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
+        {
+            return null;
+        }
+
+        return await File.ReadAllTextAsync(filePath, ct);
     }
 
     private static string MakeUniqueFileName(string fileName)

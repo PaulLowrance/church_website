@@ -22,6 +22,10 @@ public class DeletePodcastEpisodeEndpoint(IPodcastEpisodeRepository repo, IFileS
         }
 
         await fileStorage.DeleteAudioFileAsync(episode.AudioFilePath, ct);
+        if (!string.IsNullOrWhiteSpace(episode.TranscriptFilePath))
+        {
+            await fileStorage.DeleteTranscriptFileAsync(episode.TranscriptFilePath, ct);
+        }
         await repo.DeleteAsync(req.Id);
 
         await Send.NoContentAsync(cancellation: ct);

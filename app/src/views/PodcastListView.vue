@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import apiClient from '@/api/client'
 
 interface PodcastEpisode {
@@ -14,6 +14,9 @@ interface PodcastEpisode {
   audioContentType: string
   publishedAt: string
   createdAt: string
+  transcriptStatus: string
+  transcriptUrl: string | null
+  transcriptError: string | null
   tags: string[]
 }
 
@@ -21,6 +24,46 @@ const episodes = ref<PodcastEpisode[]>([])
 const loading = ref(false)
 const error = ref('')
 const churchName = ref('')
+
+const transcriptOpen = reactive<Record<string, boolean>>({})
+const transcriptText = reactive<Record<string, string>>({})
+const transcriptLoading = reactive<Record<string, boolean>>({})
+const transcriptLoadError = reactive<Record<string, string>>({})
+
+async function toggleTranscript(episode: PodcastEpisode) {
+  if (!episode.transcriptUrl) return
+  const id = episode.id
+  transcriptOpen[id] = !transcriptOpen[id]
+  if (transcriptOpen[id] && !transcriptText[id] && !transcriptLoading[id]) {
+    transcriptLoading[id] = true
+    transcriptLoadError[id] = ''
+    try {
+      const response = await fetch(episode.transcriptUrl)
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      transcriptText[id] = await response.text()
+    } catch (err) {
+      transcriptLoadError[id] = 'Failed to load transcript.'
+      console.error('Failed to load transcript', err)
+    } finally {
+      transcriptLoading[id] = false
+    }
+  }
+}
+
+function transcriptLabel(status: string): string {
+  switch (status) {
+    case 'queued':
+      return 'Transcription queued…'
+    case 'processing':
+      return 'Transcribing…'
+    case 'completed':
+      return 'Transcript ready'
+    case 'error':
+      return 'Transcription failed'
+    default:
+      return ''
+  }
+}
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-US', {
@@ -112,6 +155,54 @@ onMounted(async () => {
             <p v-if="episode.description" class="q-mt-md text-body2" style="white-space: pre-wrap;">
               {{ episode.description }}
             </p>
+
+            <div v-if="episode.transcriptStatus === 'processing' || episode.transcriptStatus === 'queued'" class="q-mt-sm">
+              <q-chip color="amber" text-color="black" dense size="sm" icon="hourglass_top">
+                {{ transcriptLabel(episode.transcriptStatus) }}
+              </q-chip>
+            </div>
+
+            <div v-else-if="episode.transcriptStatus === 'error'" class="q-mt-sm">
+              <q-chip color="negative" text-color="white" dense size="sm" icon="error" :label="episode.transcriptError ? 'Transcription failed' : transcriptLabel(episode.transcriptStatus)" />
+            </div>
+
+            <div v-else-if="episode.transcriptUrl" class="q-mt-sm">
+              <div class="row items-center q-gutter-sm">
+                <q-btn
+                  flat
+                  dense
+                  color="primary"
+                  icon="article"
+                  :label="transcriptOpen[episode.id] ? 'Hide Transcript' : 'View Transcript'"
+                  @click="toggleTranscript(episode)"
+                  :aria-expanded="!!transcriptOpen[episode.id]"
+                  aria-label="View transcript"
+                />
+                <q-btn
+                  flat
+                  dense
+                  color="primary"
+                  icon="download"
+                  label="Download Transcript"
+                  :href="episode.transcriptUrl"
+                  :download="`${episode.title.replace(/[^\w]+/g, '_')}_transcript.txt`"
+                  target="_blank"
+                  aria-label="Download transcript"
+                />
+              </div>
+
+              <div v-if="transcriptOpen[episode.id]" class="q-mt-sm">
+                <q-inner-loading v-if="transcriptLoading[episode.id]" showing color="primary" label="Loading transcript..." />
+                <q-banner v-else-if="transcriptLoadError[episode.id]" class="bg-negative text-white" dense>
+                  {{ transcriptLoadError[episode.id] }}
+                </q-banner>
+                <q-card v-else-if="transcriptText[episode.id]" flat bordered class="bg-grey-1">
+                  <q-card-section style="white-space: pre-wrap; max-height: 300px; overflow-y: auto;">
+                    {{ transcriptText[episode.id] }}
+                  </q-card-section>
+                </q-card>
+              </div>
+            </div>
 
             <div v-if="episode.tags.length > 0" class="q-mt-sm">
               <q-chip

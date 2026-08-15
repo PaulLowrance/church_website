@@ -1,6 +1,8 @@
+using ChurchWebsite.Core;
 using ChurchWebsite.Core.Entities;
 using ChurchWebsite.Core.Interfaces;
 using FastEndpoints;
+using Microsoft.Extensions.Configuration;
 
 namespace ChurchWebsite.Api.Endpoints.Podcast;
 
@@ -23,7 +25,10 @@ public class CreatePodcastEpisodeResponse
 
 public class CreatePodcastEpisodeEndpoint(
     IPodcastEpisodeRepository repo,
-    IFileStorageService fileStorage) : Endpoint<CreatePodcastEpisodeRequest, CreatePodcastEpisodeResponse>
+    IFileStorageService fileStorage,
+    ITranscriptionService transcription,
+    IConfiguration configuration,
+    ILogger<CreatePodcastEpisodeEndpoint> logger) : Endpoint<CreatePodcastEpisodeRequest, CreatePodcastEpisodeResponse>
 {
     public override void Configure()
     {
@@ -46,13 +51,21 @@ public class CreatePodcastEpisodeEndpoint(
             return;
         }
 
-        if (req.AudioFile is null || req.AudioFile.Length == 0)
+        var audioOptions = AudioUploadValidator.BuildOptions(configuration);
+        var (audioOk, audioError) = AudioUploadValidator.Validate(
+            req.AudioFile?.FileName,
+            req.AudioFile?.ContentType,
+            req.AudioFile?.Length ?? 0,
+            audioOptions);
+        if (!audioOk)
         {
-            ThrowError("Audio file is required");
+            AddError(r => r.AudioFile, audioError!);
+            await Send.ErrorsAsync(statusCode: 400, cancellation: ct);
             return;
         }
 
-        var filePath = await fileStorage.SaveAudioFileAsync(req.AudioFile.OpenReadStream(), req.AudioFile.FileName, ct);
+        var audio = req.AudioFile!;
+        var filePath = await fileStorage.SaveAudioFileAsync(audio.OpenReadStream(), audio.FileName, ct);
 
         var episode = new PodcastEpisode
         {
@@ -62,9 +75,9 @@ public class CreatePodcastEpisodeEndpoint(
             Description = req.Description?.Trim(),
             SeriesName = req.SeriesName?.Trim(),
             AudioFilePath = filePath,
-            AudioFileName = req.AudioFile.FileName,
-            AudioFileSize = req.AudioFile.Length,
-            AudioContentType = req.AudioFile.ContentType ?? "audio/mpeg",
+            AudioFileName = audio.FileName,
+            AudioFileSize = audio.Length,
+            AudioContentType = audio.ContentType ?? "audio/mpeg",
             PublishedAt = req.PublishedAt.Kind == DateTimeKind.Unspecified
                 ? DateTime.SpecifyKind(req.PublishedAt, DateTimeKind.Utc)
                 : req.PublishedAt.ToUniversalTime(),
@@ -75,11 +88,40 @@ public class CreatePodcastEpisodeEndpoint(
 
         await repo.CreateAsync(episode);
 
+        await SubmitTranscriptionAsync(episode, transcription, repo, logger, ct);
+
         await Send.OkAsync(new CreatePodcastEpisodeResponse
         {
             Id = episode.Id,
             Title = episode.Title
         }, cancellation: ct);
+    }
+
+    private static async Task SubmitTranscriptionAsync(
+        PodcastEpisode episode,
+        ITranscriptionService transcription,
+        IPodcastEpisodeRepository repo,
+        ILogger logger,
+        CancellationToken ct)
+    {
+        try
+        {
+            var transcriptId = await transcription.SubmitAsync(episode.AudioFilePath, ct);
+            episode.AssemblyAiTranscriptId = transcriptId;
+            episode.TranscriptStatus = "queued";
+            episode.TranscriptError = null;
+            episode.SummaryStatus = "none";
+            episode.SummaryError = null;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to submit transcription for episode {EpisodeId}", episode.Id);
+            episode.TranscriptStatus = "error";
+            episode.TranscriptError = $"Transcription submission failed: {ex.Message}";
+        }
+
+        episode.UpdatedAt = DateTime.UtcNow;
+        await repo.UpdateAsync(episode);
     }
 
     private static List<string> ParseTags(string? tagsInput)

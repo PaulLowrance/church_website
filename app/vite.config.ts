@@ -19,17 +19,20 @@ export default defineConfig({
     }
   },
   server: {
+    host: true,
+    port: Number(process.env.PORT) || 5173,
+    strictPort: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:5001',
+        target: process.env.VITE_API_PROXY_TARGET || 'http://localhost:5001',
         changeOrigin: true
       },
       '/podcast/rss': {
-        target: 'http://localhost:5001',
+        target: process.env.VITE_API_PROXY_TARGET || 'http://localhost:5001',
         changeOrigin: true
       },
       '/uploads': {
-        target: 'http://localhost:5001',
+        target: process.env.VITE_API_PROXY_TARGET || 'http://localhost:5001',
         changeOrigin: true
       }
     }

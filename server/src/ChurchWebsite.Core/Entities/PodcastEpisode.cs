@@ -14,5 +14,11 @@ public class PodcastEpisode
     public DateTime PublishedAt { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+    public string TranscriptStatus { get; set; } = "none";
+    public string? TranscriptFilePath { get; set; }
+    public string? AssemblyAiTranscriptId { get; set; }
+    public string? TranscriptError { get; set; }
+    public string SummaryStatus { get; set; } = "none";
+    public string? SummaryError { get; set; }
     public List<string> Tags { get; set; } = [];
 }

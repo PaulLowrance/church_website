@@ -9,4 +9,9 @@ public interface IFileStorageService
     Task<string> SaveImageFileAsync(Stream fileStream, string fileName, CancellationToken ct = default);
     Task DeleteImageFileAsync(string filePath, CancellationToken ct = default);
     string GetImagePublicUrl(string filePath);
+
+    Task<string> SaveTranscriptFileAsync(Stream fileStream, string fileName, CancellationToken ct = default);
+    Task DeleteTranscriptFileAsync(string filePath, CancellationToken ct = default);
+    string GetTranscriptPublicUrl(string filePath);
+    Task<string?> ReadTranscriptFileAsync(string filePath, CancellationToken ct = default);
 }

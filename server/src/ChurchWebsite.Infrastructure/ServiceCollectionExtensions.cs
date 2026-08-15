@@ -17,6 +17,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPodcastEpisodeRepository, PodcastEpisodeRepository>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
+        services.AddScoped<ITranscriptionService, AssemblyAITranscriptionService>();
+        services.AddHttpClient("AssemblyAI");
+        services.AddHostedService<TranscriptionProcessingService>();
         return services;
     }
 }
