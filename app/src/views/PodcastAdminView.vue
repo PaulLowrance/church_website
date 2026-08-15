@@ -42,7 +42,7 @@ async function loadEpisodes() {
     const response = await apiClient.get('/admin/podcast/episodes')
     episodes.value = response.data
   } catch (error) {
-    console.error('Failed to load podcast episodes', error)
+    console.error('Failed to load sermons', error)
   } finally {
     loading.value = false
   }
@@ -183,8 +183,8 @@ async function doDelete() {
   <q-page padding>
     <q-card>
       <q-card-section class="row items-center justify-between">
-        <div class="text-h5">Manage Podcast Episodes</div>
-        <q-btn label="Create New Episode" color="positive" @click="createEpisode" />
+        <div class="text-h5">Manage Sermons</div>
+        <q-btn label="Create New Sermon" color="positive" @click="createEpisode" />
       </q-card-section>
       <q-separator />
       <q-card-section>

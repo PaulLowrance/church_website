@@ -81,7 +81,7 @@ function logout() {
       <q-card-section>
         <div class="row q-gutter-md">
           <q-btn label="Manage Pages" color="primary" @click="router.push('/admin')" />
-          <q-btn label="Manage Podcast" color="primary" @click="router.push('/admin/podcast')" />
+          <q-btn label="Manage Sermons" color="primary" @click="router.push('/admin/podcast')" />
         </div>
       </q-card-section>
     </q-card>

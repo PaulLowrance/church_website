@@ -141,7 +141,7 @@ async function saveEpisode() {
     if (err.response?.data?.errors) {
       errors.value = err.response.data.errors
     } else {
-      errors.value.general = 'Failed to update episode. Please try again.'
+      errors.value.general = 'Failed to update sermon. Please try again.'
     }
   } finally {
     saving.value = false
@@ -157,7 +157,7 @@ function goBack() {
   <q-page padding>
     <q-card style="max-width: 800px; margin: 0 auto">
       <q-card-section>
-        <div class="text-h5">Edit Podcast Episode</div>
+        <div class="text-h5">Edit Sermon</div>
       </q-card-section>
 
       <q-separator />
@@ -171,12 +171,12 @@ function goBack() {
         <q-form @submit.prevent="saveEpisode" greedy>
           <q-input
             v-model="title"
-            label="Episode Title *"
+            label="Sermon Title *"
             :error="!!errors.title"
             :error-message="errors.title"
             outlined
             class="q-mb-md"
-            aria-label="Episode title"
+            aria-label="Sermon title"
           />
 
           <q-input
@@ -204,7 +204,7 @@ function goBack() {
             outlined
             rows="4"
             class="q-mb-md"
-            aria-label="Episode description"
+            aria-label="Sermon description"
           />
 
           <q-input
