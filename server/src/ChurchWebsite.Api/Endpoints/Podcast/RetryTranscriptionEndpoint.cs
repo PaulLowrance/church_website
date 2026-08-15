@@ -1,3 +1,4 @@
+using ChurchWebsite.Core;
 using ChurchWebsite.Core.Interfaces;
 using FastEndpoints;
 
@@ -11,7 +12,6 @@ public class RetryTranscriptionRequest
 public class RetryTranscriptionEndpoint(
     IPodcastEpisodeRepository repo,
     IFileStorageService fileStorage,
-    ITranscriptionService transcription,
     ILogger<RetryTranscriptionEndpoint> logger) : Endpoint<RetryTranscriptionRequest, PodcastEpisodeDto>
 {
     public override void Configure()
@@ -29,31 +29,23 @@ public class RetryTranscriptionEndpoint(
             return;
         }
 
-        if (episode.TranscriptStatus != "error")
+        if (episode.TranscriptStatus != TranscriptionStatuses.Error)
         {
             ThrowError("Transcription can only be retried when it has failed.");
             return;
         }
 
-        try
-        {
-            var transcriptId = await transcription.SubmitAsync(episode.AudioFilePath, ct);
-            episode.AssemblyAiTranscriptId = transcriptId;
-            episode.TranscriptStatus = "queued";
-            episode.TranscriptError = null;
-            episode.UpdatedAt = DateTime.UtcNow;
-            await repo.UpdateAsync(episode);
+        episode.AssemblyAiTranscriptId = null;
+        episode.TranscriptError = null;
+        episode.TranscriptStatus = TranscriptionStatuses.PendingSubmit;
+        episode.UpdatedAt = DateTime.UtcNow;
+        await repo.UpdateAsync(episode);
 
-            logger.LogInformation("Retried transcription for episode {EpisodeId}, new transcript {TranscriptId}",
-                episode.Id, transcriptId);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Retry transcription failed for episode {EpisodeId}", episode.Id);
-            ThrowError($"Transcription submission failed: {ex.Message}");
-            return;
-        }
+        logger.LogInformation("Episode {EpisodeId} queued for transcription retry.", episode.Id);
 
-        await Send.OkAsync(PodcastEpisodeMapper.ToDto(episode, fileStorage), cancellation: ct);
+        await Send.ResponseAsync(
+            PodcastEpisodeMapper.ToDto(episode, fileStorage),
+            StatusCodes.Status202Accepted,
+            cancellation: ct);
     }
 }

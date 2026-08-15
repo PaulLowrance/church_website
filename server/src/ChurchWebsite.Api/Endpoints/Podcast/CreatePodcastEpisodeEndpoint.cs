@@ -26,7 +26,6 @@ public class CreatePodcastEpisodeResponse
 public class CreatePodcastEpisodeEndpoint(
     IPodcastEpisodeRepository repo,
     IFileStorageService fileStorage,
-    ITranscriptionService transcription,
     IConfiguration configuration,
     ILogger<CreatePodcastEpisodeEndpoint> logger) : Endpoint<CreatePodcastEpisodeRequest, CreatePodcastEpisodeResponse>
 {
@@ -83,45 +82,22 @@ public class CreatePodcastEpisodeEndpoint(
                 : req.PublishedAt.ToUniversalTime(),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
-            Tags = ParseTags(req.Tags)
+            Tags = ParseTags(req.Tags),
+            TranscriptStatus = TranscriptionStatuses.PendingSubmit,
+            SummaryStatus = TranscriptionStatuses.None
         };
 
         await repo.CreateAsync(episode);
 
-        await SubmitTranscriptionAsync(episode, transcription, repo, logger, ct);
+        logger.LogInformation("Saved episode {EpisodeId}, queued for transcription submission.", episode.Id);
 
-        await Send.OkAsync(new CreatePodcastEpisodeResponse
+        var response = new CreatePodcastEpisodeResponse
         {
             Id = episode.Id,
             Title = episode.Title
-        }, cancellation: ct);
-    }
+        };
 
-    private static async Task SubmitTranscriptionAsync(
-        PodcastEpisode episode,
-        ITranscriptionService transcription,
-        IPodcastEpisodeRepository repo,
-        ILogger logger,
-        CancellationToken ct)
-    {
-        try
-        {
-            var transcriptId = await transcription.SubmitAsync(episode.AudioFilePath, ct);
-            episode.AssemblyAiTranscriptId = transcriptId;
-            episode.TranscriptStatus = "queued";
-            episode.TranscriptError = null;
-            episode.SummaryStatus = "none";
-            episode.SummaryError = null;
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Failed to submit transcription for episode {EpisodeId}", episode.Id);
-            episode.TranscriptStatus = "error";
-            episode.TranscriptError = $"Transcription submission failed: {ex.Message}";
-        }
-
-        episode.UpdatedAt = DateTime.UtcNow;
-        await repo.UpdateAsync(episode);
+        await Send.ResponseAsync(response, StatusCodes.Status202Accepted, cancellation: ct);
     }
 
     private static List<string> ParseTags(string? tagsInput)

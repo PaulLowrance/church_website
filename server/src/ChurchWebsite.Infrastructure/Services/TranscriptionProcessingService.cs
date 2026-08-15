@@ -1,4 +1,5 @@
 using System.Text;
+using ChurchWebsite.Core;
 using ChurchWebsite.Core.Entities;
 using ChurchWebsite.Core.Interfaces;
 using Microsoft.Extensions.Configuration;
@@ -13,7 +14,12 @@ public class TranscriptionProcessingService(
     IConfiguration configuration,
     ILogger<TranscriptionProcessingService> logger) : BackgroundService
 {
-    private static readonly string[] InProgressStatuses = ["queued", "processing"];
+    private static readonly string[] InProgressStatuses =
+    [
+        TranscriptionStatuses.PendingSubmit,
+        TranscriptionStatuses.Queued,
+        TranscriptionStatuses.Processing
+    ];
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -61,6 +67,12 @@ public class TranscriptionProcessingService(
         IFileStorageService fileStorage,
         CancellationToken ct)
     {
+        if (episode.TranscriptStatus == TranscriptionStatuses.PendingSubmit)
+        {
+            await SubmitAndQueueAsync(episode, transcription, repo, ct);
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(episode.AssemblyAiTranscriptId))
         {
             return;
@@ -74,7 +86,7 @@ public class TranscriptionProcessingService(
             case "processing":
                 return;
             case "error":
-                episode.TranscriptStatus = "error";
+                episode.TranscriptStatus = TranscriptionStatuses.Error;
                 episode.TranscriptError = result.Error ?? "AssemblyAI transcription failed.";
                 episode.UpdatedAt = DateTime.UtcNow;
                 await repo.UpdateAsync(episode);
@@ -83,6 +95,34 @@ public class TranscriptionProcessingService(
             case "completed":
                 await CompleteAsync(episode, result.Text, repo, transcription, fileStorage, ct);
                 return;
+        }
+    }
+
+    private async Task SubmitAndQueueAsync(
+        PodcastEpisode episode,
+        ITranscriptionService transcription,
+        IPodcastEpisodeRepository repo,
+        CancellationToken ct)
+    {
+        try
+        {
+            var transcriptId = await transcription.SubmitAsync(episode.AudioFilePath, ct);
+            episode.AssemblyAiTranscriptId = transcriptId;
+            episode.TranscriptStatus = TranscriptionStatuses.Queued;
+            episode.TranscriptError = null;
+            episode.UpdatedAt = DateTime.UtcNow;
+            await repo.UpdateAsync(episode);
+
+            logger.LogInformation("Submitted episode {EpisodeId} for transcription, transcript {TranscriptId}",
+                episode.Id, transcriptId);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Initial transcription submission failed for episode {EpisodeId}", episode.Id);
+            episode.TranscriptStatus = TranscriptionStatuses.Error;
+            episode.TranscriptError = $"Initial submission failed: {ex.Message}";
+            episode.UpdatedAt = DateTime.UtcNow;
+            await repo.UpdateAsync(episode);
         }
     }
 
@@ -96,7 +136,7 @@ public class TranscriptionProcessingService(
     {
         if (string.IsNullOrWhiteSpace(text))
         {
-            episode.TranscriptStatus = "error";
+            episode.TranscriptStatus = TranscriptionStatuses.Error;
             episode.TranscriptError = "AssemblyAI completed but returned no transcript text.";
             episode.UpdatedAt = DateTime.UtcNow;
             await repo.UpdateAsync(episode);
@@ -109,7 +149,7 @@ public class TranscriptionProcessingService(
             episode.TranscriptFilePath = await fileStorage.SaveTranscriptFileAsync(stream, fileName, ct);
         }
 
-        episode.TranscriptStatus = "completed";
+        episode.TranscriptStatus = TranscriptionStatuses.Completed;
         episode.TranscriptError = null;
         episode.UpdatedAt = DateTime.UtcNow;
         await repo.UpdateAsync(episode);

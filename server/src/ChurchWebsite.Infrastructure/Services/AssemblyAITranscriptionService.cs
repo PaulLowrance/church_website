@@ -121,12 +121,18 @@ public class AssemblyAITranscriptionService(
 
     private async Task<string> UploadFileAsync(string audioFilePath, CancellationToken ct)
     {
-        var bytes = await File.ReadAllBytesAsync(audioFilePath, ct);
+        await using var fileStream = new FileStream(
+            audioFilePath,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.Read,
+            bufferSize: 81920,
+            useAsync: true);
 
-        using var client = CreateClient();
-        using var content = new ByteArrayContent(bytes);
+        using var content = new StreamContent(fileStream);
         content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 
+        using var client = CreateClient();
         using var response = await client.PostAsync($"{BaseUrl}/v2/upload", content, ct);
         response.EnsureSuccessStatusCode();
 
