@@ -36,6 +36,11 @@ const retryType = ref<'transcription' | 'summary'>('transcription')
 const confirmRetry = ref(false)
 const retrying = ref(false)
 
+const regenerateId = ref('')
+const regenerateTitle = ref('')
+const confirmRegenerate = ref(false)
+const regeneratingSummary = ref(false)
+
 async function loadEpisodes() {
   loading.value = true
   try {
@@ -68,6 +73,25 @@ async function doRetry() {
     console.error('Failed to retry', error)
   } finally {
     retrying.value = false
+  }
+}
+
+function promptRegenerateSummary(id: string, title: string) {
+  regenerateId.value = id
+  regenerateTitle.value = title
+  confirmRegenerate.value = true
+}
+
+async function doRegenerateSummary() {
+  regeneratingSummary.value = true
+  try {
+    await apiClient.post(`/podcast/episodes/${regenerateId.value}/retry-summary`, {})
+    confirmRegenerate.value = false
+    await loadEpisodes()
+  } catch (error) {
+    console.error('Failed to regenerate summary', error)
+  } finally {
+    regeneratingSummary.value = false
   }
 }
 
@@ -273,6 +297,16 @@ async function doDelete() {
                   @click="promptRetry(props.row.id, props.row.title, 'summary')"
                 />
                 <q-btn
+                  v-if="props.row.transcriptStatus === 'completed' && props.row.summaryStatus !== 'processing' && props.row.summaryStatus !== 'queued' && props.row.summaryStatus !== 'error'"
+                  label="Regenerate Summary"
+                  color="primary"
+                  size="sm"
+                  flat
+                  icon="auto_awesome"
+                  aria-label="Regenerate AI summary for this sermon"
+                  @click="promptRegenerateSummary(props.row.id, props.row.title)"
+                />
+                <q-btn
                   label="Edit"
                   color="primary"
                   size="sm"
@@ -318,6 +352,31 @@ async function doDelete() {
         <q-card-actions align="right">
           <q-btn flat label="Cancel" v-close-popup />
           <q-btn flat label="Retry" color="primary" :loading="retrying" @click="doRetry" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog v-model="confirmRegenerate" persistent>
+      <q-card>
+        <q-card-section class="row items-center">
+          <q-avatar icon="auto_awesome" color="primary" text-color="white" />
+          <span class="q-ml-sm">
+            Regenerate the AI summary for
+            "<strong>{{ regenerateTitle }}</strong>"?<br />
+            <span class="text-caption">
+              The current description will be replaced and an additional API call will be made.
+            </span>
+          </span>
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Cancel" v-close-popup />
+          <q-btn
+            flat
+            label="Regenerate"
+            color="primary"
+            :loading="regeneratingSummary"
+            @click="doRegenerateSummary"
+          />
         </q-card-actions>
       </q-card>
     </q-dialog>

@@ -25,6 +25,9 @@ const saving = ref(false)
 const retrying = ref(false)
 const errors = ref<Record<string, string>>({})
 
+const confirmRegenerateSummary = ref(false)
+const regeneratingSummary = ref(false)
+
 function transcriptStatusLabel(status: string): string {
   switch (status) {
     case 'queued':
@@ -84,11 +87,36 @@ async function retrySummary() {
   }
 }
 
+const episodeTitle = ref('')
+const showRegenerateSummaryConfirm = () => {
+  if (transcriptStatus.value !== 'completed') return
+  confirmRegenerateSummary.value = true
+}
+const cancelRegenerateSummary = () => {
+  confirmRegenerateSummary.value = false
+}
+const confirmAndRegenerateSummary = async () => {
+  regeneratingSummary.value = true
+  try {
+    const response = await apiClient.post(`/podcast/episodes/${episodeId}/retry-summary`, {})
+    description.value = response.data.description || ''
+    summaryStatus.value = response.data.summaryStatus || 'completed'
+    summaryError.value = ''
+    confirmRegenerateSummary.value = false
+  } catch (err: any) {
+    console.error('Failed to regenerate summary', err)
+    summaryError.value = err.response?.data?.message || 'Failed to regenerate summary.'
+  } finally {
+    regeneratingSummary.value = false
+  }
+}
+
 onMounted(async () => {
   try {
     const response = await apiClient.get(`/podcast/episodes/${episodeId}`)
     const episode = response.data
     title.value = episode.title
+    episodeTitle.value = episode.title
     speakerName.value = episode.speakerName
     description.value = episode.description || ''
     seriesName.value = episode.seriesName || ''
@@ -284,6 +312,17 @@ function goBack() {
                 :loading="retrying"
                 @click="retrySummary"
               />
+              <q-btn
+                v-if="transcriptStatus === 'completed' && summaryStatus !== 'processing' && summaryStatus !== 'queued' && summaryStatus !== 'error'"
+                label="Regenerate Summary"
+                color="primary"
+                size="sm"
+                flat
+                icon="auto_awesome"
+                :loading="regeneratingSummary"
+                aria-label="Regenerate AI summary for this sermon"
+                @click="showRegenerateSummaryConfirm"
+              />
             </div>
             <q-banner v-if="summaryError" class="bg-negative text-white q-mt-sm" dense>
               {{ summaryError }}
@@ -304,5 +343,30 @@ function goBack() {
         </q-form>
       </q-card-section>
     </q-card>
+
+    <q-dialog v-model="confirmRegenerateSummary" persistent>
+      <q-card>
+        <q-card-section class="row items-center">
+          <q-avatar icon="auto_awesome" color="primary" text-color="white" />
+          <span class="q-ml-sm">
+            Regenerate the AI summary for
+            "<strong>{{ episodeTitle }}</strong>"?<br />
+            <span class="text-caption">
+              The current description will be replaced and an additional API call will be made.
+            </span>
+          </span>
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Cancel" v-close-popup @click="cancelRegenerateSummary" />
+          <q-btn
+            flat
+            label="Regenerate"
+            color="primary"
+            :loading="regeneratingSummary"
+            @click="confirmAndRegenerateSummary"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
