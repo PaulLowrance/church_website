@@ -1,6 +1,7 @@
 using ChurchWebsite.Core;
 using ChurchWebsite.Core.Interfaces;
 using FastEndpoints;
+using Microsoft.Extensions.Configuration;
 
 namespace ChurchWebsite.Api.Endpoints.Podcast;
 
@@ -12,6 +13,7 @@ public class RetryTranscriptionRequest
 public class RetryTranscriptionEndpoint(
     IPodcastEpisodeRepository repo,
     IFileStorageService fileStorage,
+    IConfiguration configuration,
     ILogger<RetryTranscriptionEndpoint> logger) : Endpoint<RetryTranscriptionRequest, PodcastEpisodeDto>
 {
     public override void Configure()
@@ -43,8 +45,9 @@ public class RetryTranscriptionEndpoint(
 
         logger.LogInformation("Episode {EpisodeId} queued for transcription retry.", episode.Id);
 
+        var abbr = PodcastEpisodeMapper.LoadTitleAbbreviations(configuration);
         await Send.ResponseAsync(
-            PodcastEpisodeMapper.ToDto(episode, fileStorage),
+            PodcastEpisodeMapper.ToDto(episode, fileStorage, abbr),
             StatusCodes.Status202Accepted,
             cancellation: ct);
     }

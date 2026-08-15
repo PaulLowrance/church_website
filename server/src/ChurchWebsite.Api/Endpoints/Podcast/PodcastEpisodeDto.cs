@@ -1,3 +1,4 @@
+using ChurchWebsite.Core;
 using ChurchWebsite.Core.Entities;
 using ChurchWebsite.Core.Interfaces;
 using FastEndpoints;
@@ -8,7 +9,9 @@ public class PodcastEpisodeDto
 {
     public Guid Id { get; set; }
     public string Title { get; set; } = string.Empty;
+    public string? SpeakerTitle { get; set; }
     public string SpeakerName { get; set; } = string.Empty;
+    public string SpeakerDisplay { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string? SeriesName { get; set; }
     public string AudioUrl { get; set; } = string.Empty;
@@ -27,13 +30,20 @@ public class PodcastEpisodeDto
 
 public static class PodcastEpisodeMapper
 {
-    public static PodcastEpisodeDto ToDto(PodcastEpisode episode, IFileStorageService fileStorage)
+    public static PodcastEpisodeDto ToDto(
+        PodcastEpisode episode,
+        IFileStorageService fileStorage,
+        IReadOnlyDictionary<string, string> titleAbbreviations)
     {
+        var variants = SpeakerFormatter.Format(episode.SpeakerTitle, episode.SpeakerName, titleAbbreviations);
+
         return new PodcastEpisodeDto
         {
             Id = episode.Id,
             Title = episode.Title,
+            SpeakerTitle = episode.SpeakerTitle,
             SpeakerName = episode.SpeakerName,
+            SpeakerDisplay = variants.FullFormal,
             Description = episode.Description,
             SeriesName = episode.SeriesName,
             AudioUrl = fileStorage.GetPublicUrl(episode.AudioFilePath),
@@ -51,5 +61,16 @@ public static class PodcastEpisodeMapper
             SummaryError = episode.SummaryError,
             Tags = episode.Tags
         };
+    }
+
+    /// <summary>
+    /// Convenience for callers that have already bound an abbreviation dictionary
+    /// from <c>IConfiguration</c> and want to reuse it across a list of episodes.
+    /// </summary>
+    public static IReadOnlyDictionary<string, string> LoadTitleAbbreviations(IConfiguration configuration)
+    {
+        var raw = configuration.GetSection("Speakers:TitleAbbreviations").Get<Dictionary<string, string>>()
+            ?? new Dictionary<string, string>();
+        return new Dictionary<string, string>(raw, StringComparer.OrdinalIgnoreCase);
     }
 }

@@ -1,5 +1,7 @@
+using ChurchWebsite.Core;
 using ChurchWebsite.Core.Interfaces;
 using FastEndpoints;
+using Microsoft.Extensions.Configuration;
 
 namespace ChurchWebsite.Api.Endpoints.Podcast;
 
@@ -12,6 +14,7 @@ public class RetrySummaryEndpoint(
     IPodcastEpisodeRepository repo,
     IFileStorageService fileStorage,
     ITranscriptionService transcription,
+    IConfiguration configuration,
     ILogger<RetrySummaryEndpoint> logger) : Endpoint<RetrySummaryRequest, PodcastEpisodeDto>
 {
     public override void Configure()
@@ -47,9 +50,15 @@ public class RetrySummaryEndpoint(
         episode.UpdatedAt = DateTime.UtcNow;
         await repo.UpdateAsync(episode);
 
+        var abbr = PodcastEpisodeMapper.LoadTitleAbbreviations(configuration);
+        var speakerHint = SpeakerFormatter.BuildSummaryHint(episode.SpeakerTitle, episode.SpeakerName, abbr);
+        var promptText = speakerHint.Length > 0
+            ? speakerHint + transcriptText
+            : transcriptText;
+
         try
         {
-            var summary = await transcription.SummarizeAsync(transcriptText, ct);
+            var summary = await transcription.SummarizeAsync(promptText, ct);
             if (!string.IsNullOrWhiteSpace(summary))
             {
                 episode.Description = summary;
@@ -83,6 +92,6 @@ public class RetrySummaryEndpoint(
             return;
         }
 
-        await Send.OkAsync(PodcastEpisodeMapper.ToDto(episode, fileStorage), cancellation: ct);
+        await Send.OkAsync(PodcastEpisodeMapper.ToDto(episode, fileStorage, abbr), cancellation: ct);
     }
 }

@@ -4,6 +4,7 @@ public class PodcastEpisode
 {
     public Guid Id { get; set; }
     public string Title { get; set; } = string.Empty;
+    public string? SpeakerTitle { get; set; }
     public string SpeakerName { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string? SeriesName { get; set; }

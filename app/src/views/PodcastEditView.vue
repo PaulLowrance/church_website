@@ -8,6 +8,7 @@ const route = useRoute()
 const episodeId = route.params.id as string
 
 const title = ref('')
+const speakerTitle = ref('')
 const speakerName = ref('')
 const description = ref('')
 const seriesName = ref('')
@@ -117,6 +118,7 @@ onMounted(async () => {
     const episode = response.data
     title.value = episode.title
     episodeTitle.value = episode.title
+    speakerTitle.value = episode.speakerTitle || ''
     speakerName.value = episode.speakerName
     description.value = episode.description || ''
     seriesName.value = episode.seriesName || ''
@@ -150,6 +152,7 @@ async function saveEpisode() {
     const formData = new FormData()
     formData.append('id', episodeId)
     formData.append('title', title.value.trim())
+    if (speakerTitle.value.trim()) formData.append('speakerTitle', speakerTitle.value.trim())
     formData.append('speakerName', speakerName.value.trim())
     if (description.value) formData.append('description', description.value.trim())
     if (seriesName.value) formData.append('seriesName', seriesName.value.trim())
@@ -205,6 +208,15 @@ function goBack() {
             outlined
             class="q-mb-md"
             aria-label="Sermon title"
+          />
+
+          <q-input
+            v-model="speakerTitle"
+            label="Speaker Title (optional)"
+            hint="e.g. Elder, Pastor, Brother"
+            outlined
+            class="q-mb-md"
+            aria-label="Speaker title"
           />
 
           <q-input

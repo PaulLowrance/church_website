@@ -174,9 +174,13 @@ public class TranscriptionProcessingService(
         episode.UpdatedAt = DateTime.UtcNow;
         await repo.UpdateAsync(episode);
 
+        var abbr = LoadTitleAbbreviations();
+        var speakerHint = SpeakerFormatter.BuildSummaryHint(episode.SpeakerTitle, episode.SpeakerName, abbr);
+        var promptText = speakerHint.Length > 0 ? speakerHint + text : text;
+
         try
         {
-            var summary = await transcription.SummarizeAsync(text, ct);
+            var summary = await transcription.SummarizeAsync(promptText, ct);
             if (!string.IsNullOrWhiteSpace(summary))
             {
                 episode.Description = summary;
@@ -198,6 +202,13 @@ public class TranscriptionProcessingService(
 
         episode.UpdatedAt = DateTime.UtcNow;
         await repo.UpdateAsync(episode);
+    }
+
+    private IReadOnlyDictionary<string, string> LoadTitleAbbreviations()
+    {
+        var raw = configuration.GetSection("Speakers:TitleAbbreviations").Get<Dictionary<string, string>>()
+            ?? new Dictionary<string, string>();
+        return new Dictionary<string, string>(raw, StringComparer.OrdinalIgnoreCase);
     }
 
     private static string Sanitize(string value)

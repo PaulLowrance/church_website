@@ -5,7 +5,9 @@ import apiClient from '@/api/client'
 interface PodcastEpisode {
   id: string
   title: string
+  speakerTitle: string | null
   speakerName: string
+  speakerDisplay: string
   description: string | null
   seriesName: string | null
   audioUrl: string
@@ -140,7 +142,7 @@ onMounted(async () => {
                 <div class="text-h6">{{ episode.title }}</div>
                 <div class="text-subtitle2 text-grey-7 q-mt-xs">
                   <q-icon name="person" size="xs" class="q-mr-xs" />
-                  {{ episode.speakerName }}
+                  {{ episode.speakerDisplay }}
                   <span class="q-mx-sm">|</span>
                   <q-icon name="event" size="xs" class="q-mr-xs" />
                   {{ formatDate(episode.publishedAt) }}

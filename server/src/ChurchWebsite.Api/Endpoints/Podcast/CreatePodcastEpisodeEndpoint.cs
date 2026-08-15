@@ -9,6 +9,7 @@ namespace ChurchWebsite.Api.Endpoints.Podcast;
 public class CreatePodcastEpisodeRequest
 {
     public string Title { get; set; } = string.Empty;
+    public string? SpeakerTitle { get; set; }
     public string SpeakerName { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string? SeriesName { get; set; }
@@ -70,6 +71,7 @@ public class CreatePodcastEpisodeEndpoint(
         {
             Id = Guid.NewGuid(),
             Title = req.Title.Trim(),
+            SpeakerTitle = string.IsNullOrWhiteSpace(req.SpeakerTitle) ? null : req.SpeakerTitle.Trim(),
             SpeakerName = req.SpeakerName.Trim(),
             Description = req.Description?.Trim(),
             SeriesName = req.SeriesName?.Trim(),
