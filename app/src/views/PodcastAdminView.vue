@@ -6,7 +6,9 @@ import apiClient from '@/api/client'
 interface PodcastEpisode {
   id: string
   title: string
+  speakerTitle: string | null
   speakerName: string
+  speakerDisplay: string
   description: string | null
   seriesName: string | null
   audioUrl: string
@@ -216,7 +218,7 @@ async function doDelete() {
           :rows="episodes"
           :columns="[
             { name: 'title', label: 'Title', field: 'title', align: 'left' },
-            { name: 'speaker', label: 'Speaker', field: 'speakerName', align: 'left' },
+            { name: 'speaker', label: 'Speaker', field: 'speakerDisplay', align: 'left' },
             { name: 'series', label: 'Series', field: 'seriesName', align: 'left' },
             { name: 'published', label: 'Published At', field: 'publishedAt', align: 'left' },
             { name: 'size', label: 'File Size', field: 'audioFileSize', align: 'right' },

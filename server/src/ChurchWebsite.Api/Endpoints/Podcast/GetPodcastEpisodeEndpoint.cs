@@ -1,9 +1,13 @@
 using ChurchWebsite.Core.Interfaces;
 using FastEndpoints;
+using Microsoft.Extensions.Configuration;
 
 namespace ChurchWebsite.Api.Endpoints.Podcast;
 
-public class GetPodcastEpisodeEndpoint(IPodcastEpisodeRepository repo, IFileStorageService fileStorage)
+public class GetPodcastEpisodeEndpoint(
+    IPodcastEpisodeRepository repo,
+    IFileStorageService fileStorage,
+    IConfiguration configuration)
     : Endpoint<PodcastEpisodeRequest, PodcastEpisodeDto>
 {
     public override void Configure()
@@ -21,7 +25,8 @@ public class GetPodcastEpisodeEndpoint(IPodcastEpisodeRepository repo, IFileStor
             return;
         }
 
-        await Send.OkAsync(PodcastEpisodeMapper.ToDto(episode, fileStorage), cancellation: ct);
+        var abbr = PodcastEpisodeMapper.LoadTitleAbbreviations(configuration);
+        await Send.OkAsync(PodcastEpisodeMapper.ToDto(episode, fileStorage, abbr), cancellation: ct);
     }
 }
 

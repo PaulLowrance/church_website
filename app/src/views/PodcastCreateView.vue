@@ -6,6 +6,7 @@ import apiClient from '@/api/client'
 const router = useRouter()
 
 const title = ref('')
+const speakerTitle = ref('')
 const speakerName = ref('')
 const description = ref('')
 const seriesName = ref('')
@@ -31,6 +32,7 @@ async function saveEpisode() {
   try {
     const formData = new FormData()
     formData.append('title', title.value.trim())
+    if (speakerTitle.value.trim()) formData.append('speakerTitle', speakerTitle.value.trim())
     formData.append('speakerName', speakerName.value.trim())
     if (description.value) formData.append('description', description.value.trim())
     if (seriesName.value) formData.append('seriesName', seriesName.value.trim())
@@ -79,6 +81,15 @@ function goBack() {
             outlined
             class="q-mb-md"
             aria-label="Sermon title"
+          />
+
+          <q-input
+            v-model="speakerTitle"
+            label="Speaker Title (optional)"
+            hint="e.g. Elder, Pastor, Brother"
+            outlined
+            class="q-mb-md"
+            aria-label="Speaker title"
           />
 
           <q-input
