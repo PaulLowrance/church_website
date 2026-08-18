@@ -1,6 +1,11 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
+import { useRoute } from 'vue-router'
+import { useSeoMeta, useHead } from '@unhead/vue'
 import apiClient from '@/api/client'
+
+const SITE_URL = import.meta.env.VITE_SITE_URL || 'https://bhpbc.org'
+const SITE_NAME = 'Brentwood Hills Primitive Baptist Church'
 
 interface PodcastEpisode {
   id: string
@@ -22,10 +27,36 @@ interface PodcastEpisode {
   tags: string[]
 }
 
+const route = useRoute()
 const episodes = ref<PodcastEpisode[]>([])
 const loading = ref(false)
 const error = ref('')
 const churchName = ref('')
+
+const pageTitle = computed(() => 'Sermons')
+const pageDescription = computed(() => {
+  const name = churchName.value || SITE_NAME
+  return `Listen to recent sermons from ${name}.` + (episodes.value.length > 0
+    ? ` Featuring ${episodes.value.length} sermon${episodes.value.length === 1 ? '' : 's'}.`
+    : '')
+})
+const canonicalUrl = computed(() => `${SITE_URL}${route.path}`)
+
+useSeoMeta({
+  title: () => `${pageTitle.value} | ${SITE_NAME}`,
+  description: () => pageDescription.value,
+  ogTitle: () => `${pageTitle.value} | ${SITE_NAME}`,
+  ogDescription: () => pageDescription.value,
+  ogType: 'website',
+  ogUrl: () => canonicalUrl.value,
+  twitterCard: 'summary_large_image'
+})
+
+useHead({
+  link: () => [
+    { rel: 'canonical', href: canonicalUrl.value }
+  ]
+})
 
 const transcriptOpen = reactive<Record<string, boolean>>({})
 const transcriptText = reactive<Record<string, string>>({})
