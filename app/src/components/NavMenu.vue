@@ -72,9 +72,13 @@ function logout() {
         class="lt-md"
       />
       <q-toolbar-title>
-        <q-btn flat dense class="text-white" @click="goHome" aria-label="Go to home page">
-          Church Website
-        </q-btn>
+        <router-link to="/" aria-label="Brentwood Hills Primitive Baptist Church home">
+          <img
+            src="/uploads/images/bhpbc-header-footer.svg"
+            alt="Brentwood Hills Primitive Baptist Church"
+            class="header-logo"
+          />
+        </router-link>
       </q-toolbar-title>
 
       <ThemeToggle class="q-mr-sm" />
@@ -227,3 +231,12 @@ function logout() {
     </q-list>
   </q-drawer>
 </template>
+
+<style scoped>
+.header-logo {
+  height: 40px;
+  width: auto;
+  display: block;
+  filter: brightness(0) invert(1);
+}
+</style>

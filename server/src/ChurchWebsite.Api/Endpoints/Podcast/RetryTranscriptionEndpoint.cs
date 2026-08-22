@@ -47,7 +47,7 @@ public class RetryTranscriptionEndpoint(
 
         var abbr = PodcastEpisodeMapper.LoadTitleAbbreviations(configuration);
         await Send.ResponseAsync(
-            PodcastEpisodeMapper.ToDto(episode, fileStorage, abbr),
+            PodcastEpisodeMapper.ToDto(episode, fileStorage, abbr, configuration),
             StatusCodes.Status202Accepted,
             cancellation: ct);
     }

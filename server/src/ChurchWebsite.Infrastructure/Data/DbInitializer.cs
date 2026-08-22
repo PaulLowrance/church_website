@@ -84,6 +84,7 @@ public class DbInitializer(DbConnectionFactory factory)
         await MigrateColumnAsync(conn, "podcast_episodes", "summary_error", "TEXT");
         await MigrateColumnAsync(conn, "podcast_episodes", "speaker_title", "VARCHAR(50)");
         await MigrateColumnAsync(conn, "podcast_episodes", "cover_image_path", "TEXT");
+        await MigrateColumnAsync(conn, "podcast_episodes", "scripture", "VARCHAR(100)");
 
         var adminExists = await conn.QueryFirstOrDefaultAsync<User>(
             "SELECT * FROM users WHERE username = @username", new { username = "admin" });
