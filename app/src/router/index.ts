@@ -8,58 +8,62 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: HomeView
+      component: HomeView,
+      meta: { title: 'Home' }
     },
     {
       path: '/login',
       name: 'login',
-      component: () => import('@/views/LoginView.vue')
+      component: () => import('@/views/LoginView.vue'),
+      meta: { title: 'Login', noindex: true }
     },
     {
       path: '/admin',
       name: 'admin',
       component: () => import('@/views/AdminView.vue'),
-      meta: { requiresAuth: true, role: 'Admin' }
+      meta: { requiresAuth: true, role: 'Admin', title: 'Admin Dashboard', noindex: true }
     },
     {
       path: '/admin/pages/create',
       name: 'page-create',
       component: () => import('@/views/PageCreateView.vue'),
-      meta: { requiresAuth: true, role: 'Admin' }
+      meta: { requiresAuth: true, role: 'Admin', title: 'Create Page', noindex: true }
     },
     {
       path: '/admin/pages/:slug/edit',
       name: 'page-editor',
       component: () => import('@/views/PageEditorView.vue'),
-      meta: { requiresAuth: true, role: 'Admin' }
+      meta: { requiresAuth: true, role: 'Admin', title: 'Edit Page', noindex: true }
     },
     {
       path: '/podcast',
       name: 'podcast',
-      component: () => import('@/views/PodcastListView.vue')
+      component: () => import('@/views/PodcastListView.vue'),
+      meta: { title: 'Sermons' }
     },
     {
       path: '/admin/podcast',
       name: 'podcast-admin',
       component: () => import('@/views/PodcastAdminView.vue'),
-      meta: { requiresAuth: true, role: 'Admin' }
+      meta: { requiresAuth: true, role: 'Admin', title: 'Sermon Admin', noindex: true }
     },
     {
       path: '/admin/podcast/create',
       name: 'podcast-create',
       component: () => import('@/views/PodcastCreateView.vue'),
-      meta: { requiresAuth: true, role: 'Admin' }
+      meta: { requiresAuth: true, role: 'Admin', title: 'Create Sermon', noindex: true }
     },
     {
       path: '/admin/podcast/:id/edit',
       name: 'podcast-edit',
       component: () => import('@/views/PodcastEditView.vue'),
-      meta: { requiresAuth: true, role: 'Admin' }
+      meta: { requiresAuth: true, role: 'Admin', title: 'Edit Sermon', noindex: true }
     },
     {
       path: '/:slug',
       name: 'page',
-      component: HomeView
+      component: HomeView,
+      meta: { title: 'Page' }
     }
   ]
 })
@@ -72,6 +76,16 @@ router.beforeEach((to, _from, next) => {
     next('/')
   } else {
     next()
+  }
+})
+
+router.afterEach((to) => {
+  const siteName = 'Brentwood Hills Primitive Baptist Church'
+  const title = to.meta.title as string | undefined
+  if (title && title !== 'Home') {
+    document.title = `${title} | ${siteName}`
+  } else if (!title) {
+    document.title = siteName
   }
 })
 

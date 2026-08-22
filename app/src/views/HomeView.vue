@@ -1,9 +1,23 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useSeoMeta, useHead } from '@unhead/vue'
 import { marked } from 'marked'
 import apiClient from '@/api/client'
 import { useAuthStore } from '@/stores/auth'
+
+const SITE_URL = import.meta.env.VITE_SITE_URL || 'https://bhpbc.org'
+const SITE_NAME = 'Brentwood Hills Primitive Baptist Church'
+const DEFAULT_DESCRIPTION = 'Primitive Baptist church in East Fort Worth, Texas. Sermons, service times, and contact information.'
+
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
+function truncateDescription(text: string): string {
+  if (text.length <= 160) return text
+  return text.slice(0, 157).trim() + '...'
+}
 
 const route = useRoute()
 const authStore = useAuthStore()
@@ -19,6 +33,40 @@ const renderedBody = computed(() => {
     return marked(body.value, { async: false }) as string
   }
   return body.value
+})
+
+const pageTitle = computed(() => {
+  if (notFound.value) return 'Page Not Found'
+  if (title.value) return title.value
+  return ''
+})
+
+const pageDescription = computed(() => {
+  if (notFound.value) return 'The page you are looking for does not exist.'
+  const text = stripHtml(renderedBody.value)
+  if (!text) return DEFAULT_DESCRIPTION
+  return truncateDescription(text)
+})
+
+const canonicalUrl = computed(() => {
+  return `${SITE_URL}${route.path}`
+})
+
+useSeoMeta({
+  title: () => (pageTitle.value ? `${pageTitle.value} | ${SITE_NAME}` : SITE_NAME),
+  description: () => pageDescription.value,
+  ogTitle: () => (pageTitle.value ? `${pageTitle.value} | ${SITE_NAME}` : SITE_NAME),
+  ogDescription: () => pageDescription.value,
+  ogType: 'website',
+  ogUrl: () => canonicalUrl.value,
+  twitterCard: 'summary_large_image',
+  robots: () => (notFound.value ? 'noindex, follow' : 'index, follow')
+})
+
+useHead({
+  link: () => [
+    { rel: 'canonical', href: canonicalUrl.value }
+  ]
 })
 
 async function loadPage(slug: string) {

@@ -1,6 +1,6 @@
 # Brentwood Hills Primitive Baptist Church Website
 
-A modern website for Brentwood Hills Primitive Baptist Church (bhpbc.org), replacing an aging Django platform. Provides static page management, sermon hosting, and a podcast RSS feed.
+A modern website for Brentwood Hills Primitive Baptist Church (bhpbc.org), a Primitive Baptist church located in East Fort Worth, Texas, near the Brentwood Hills neighborhood. Replaces an aging Django platform. Provides static page management, sermon hosting, and a podcast RSS feed.
 
 ## Development Setup
 
