@@ -15,7 +15,9 @@ const seriesName = ref('')
 const publishedAt = ref('')
 const tags = ref('')
 const audioFile = ref<File | null>(null)
+const coverImageFile = ref<File | null>(null)
 const currentAudioUrl = ref('')
+const currentCoverImageUrl = ref('')
 const transcriptStatus = ref('')
 const transcriptError = ref('')
 const summaryStatus = ref('')
@@ -125,6 +127,7 @@ onMounted(async () => {
     publishedAt.value = new Date(episode.publishedAt).toISOString().slice(0, 16)
     tags.value = episode.tags.join(', ')
     currentAudioUrl.value = episode.audioUrl
+    currentCoverImageUrl.value = episode.coverImageUrl || ''
     transcriptStatus.value = episode.transcriptStatus || 'none'
     transcriptError.value = episode.transcriptError || ''
     summaryStatus.value = episode.summaryStatus || 'none'
@@ -160,6 +163,9 @@ async function saveEpisode() {
     if (tags.value) formData.append('tags', tags.value)
     if (audioFile.value) {
       formData.append('audioFile', audioFile.value)
+    }
+    if (coverImageFile.value) {
+      formData.append('coverImageFile', coverImageFile.value)
     }
 
     await apiClient.put(`/podcast/episodes/${episodeId}`, formData, {
@@ -264,6 +270,29 @@ function goBack() {
             class="q-mb-md"
             aria-label="Tags"
           />
+
+          <div class="q-mb-md">
+            <div class="text-caption text-grey-7 q-mb-xs">Cover Image</div>
+            <div v-if="currentCoverImageUrl && !coverImageFile" class="q-mb-sm">
+              <img
+                :src="currentCoverImageUrl"
+                alt="Current cover image"
+                style="max-height: 120px; max-width: 100%; border-radius: 8px;"
+              />
+            </div>
+            <q-file
+              v-model="coverImageFile"
+              label="Replace Cover Image"
+              accept="image/*"
+              outlined
+              :hint="coverImageFile ? `Selected: ${coverImageFile.name}` : 'Leave empty to keep current image'"
+              aria-label="Replace cover image"
+            >
+              <template v-slot:prepend>
+                <q-icon name="image" />
+              </template>
+            </q-file>
+          </div>
 
           <div class="q-mb-md">
             <div class="text-caption text-grey-7 q-mb-xs">Current Audio File</div>

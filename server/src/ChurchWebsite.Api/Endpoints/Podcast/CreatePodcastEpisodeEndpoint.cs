@@ -16,6 +16,7 @@ public class CreatePodcastEpisodeRequest
     public DateTime PublishedAt { get; set; }
     public string? Tags { get; set; }
     public IFormFile AudioFile { get; set; } = null!;
+    public IFormFile? CoverImageFile { get; set; }
 }
 
 public class CreatePodcastEpisodeResponse
@@ -65,7 +66,26 @@ public class CreatePodcastEpisodeEndpoint(
         }
 
         var audio = req.AudioFile!;
-        var filePath = await fileStorage.SaveAudioFileAsync(audio.OpenReadStream(), audio.FileName, ct);
+        var audioFilePath = await fileStorage.SaveAudioFileAsync(audio.OpenReadStream(), audio.FileName, ct);
+
+        string? coverImagePath = null;
+        if (req.CoverImageFile is not null && req.CoverImageFile.Length > 0)
+        {
+            var imageOptions = ImageUploadValidator.BuildOptions(configuration);
+            var (imageOk, imageError) = ImageUploadValidator.Validate(
+                req.CoverImageFile.FileName,
+                req.CoverImageFile.ContentType,
+                req.CoverImageFile.Length,
+                imageOptions);
+            if (!imageOk)
+            {
+                AddError(r => r.CoverImageFile, imageError!);
+                await Send.ErrorsAsync(statusCode: 400, cancellation: ct);
+                return;
+            }
+
+            coverImagePath = await fileStorage.SaveImageFileAsync(req.CoverImageFile.OpenReadStream(), req.CoverImageFile.FileName, ct);
+        }
 
         var episode = new PodcastEpisode
         {
@@ -75,7 +95,8 @@ public class CreatePodcastEpisodeEndpoint(
             SpeakerName = req.SpeakerName.Trim(),
             Description = req.Description?.Trim(),
             SeriesName = req.SeriesName?.Trim(),
-            AudioFilePath = filePath,
+            AudioFilePath = audioFilePath,
+            CoverImagePath = coverImagePath,
             AudioFileName = audio.FileName,
             AudioFileSize = audio.Length,
             AudioContentType = audio.ContentType ?? "audio/mpeg",

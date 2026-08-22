@@ -17,6 +17,7 @@ interface PodcastEpisode {
   seriesName: string | null
   audioUrl: string
   audioFileName: string
+  coverImageUrl: string | null
   audioFileSize: number
   audioContentType: string
   publishedAt: string
@@ -167,6 +168,18 @@ onMounted(async () => {
     <div class="row q-col-gutter-md">
       <div v-for="episode in episodes" :key="episode.id" class="col-12">
         <q-card>
+          <div class="episode-cover" :aria-label="`Cover image for ${episode.title}`">
+            <img
+              v-if="episode.coverImageUrl"
+              :src="episode.coverImageUrl"
+              :alt="episode.title"
+              class="episode-cover__image"
+            />
+            <div v-else class="episode-cover__placeholder">
+              <q-icon name="image" size="3rem" color="paper" />
+              <span class="episode-cover__text">{{ episode.title }}</span>
+            </div>
+          </div>
           <q-card-section>
             <div class="row items-start justify-between">
               <div class="col-grow">
@@ -284,5 +297,44 @@ onMounted(async () => {
 audio {
   max-width: 100%;
   width: 100%;
+}
+
+.episode-cover {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--rule);
+}
+
+.episode-cover__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.episode-cover__placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  text-align: center;
+  background: linear-gradient(135deg, var(--rule) 0%, var(--panel) 100%);
+  color: var(--ink-muted);
+}
+
+.episode-cover__text {
+  font-family: var(--serif);
+  font-size: 1.25rem;
+  line-height: 1.2;
+  max-width: 100%;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 </style>

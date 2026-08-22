@@ -16,6 +16,7 @@ public class UpdatePodcastEpisodeRequest
     public DateTime PublishedAt { get; set; }
     public string? Tags { get; set; }
     public IFormFile? AudioFile { get; set; }
+    public IFormFile? CoverImageFile { get; set; }
 }
 
 public class UpdatePodcastEpisodeEndpoint(
@@ -53,6 +54,30 @@ public class UpdatePodcastEpisodeEndpoint(
         }
 
         var audioReplaced = req.AudioFile is not null && req.AudioFile.Length > 0;
+        var coverImageReplaced = req.CoverImageFile is not null && req.CoverImageFile.Length > 0;
+
+        if (coverImageReplaced)
+        {
+            var cover = req.CoverImageFile!;
+            var imageOptions = ImageUploadValidator.BuildOptions(configuration);
+            var (imageOk, imageError) = ImageUploadValidator.Validate(
+                cover.FileName,
+                cover.ContentType,
+                cover.Length,
+                imageOptions);
+            if (!imageOk)
+            {
+                AddError(r => r.CoverImageFile, imageError!);
+                await Send.ErrorsAsync(statusCode: 400, cancellation: ct);
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(episode.CoverImagePath))
+            {
+                await fileStorage.DeleteImageFileAsync(episode.CoverImagePath, ct);
+            }
+            episode.CoverImagePath = await fileStorage.SaveImageFileAsync(cover.OpenReadStream(), cover.FileName, ct);
+        }
 
         if (audioReplaced)
         {

@@ -16,6 +16,7 @@ public class PodcastEpisodeDto
     public string? SeriesName { get; set; }
     public string AudioUrl { get; set; } = string.Empty;
     public string AudioFileName { get; set; } = string.Empty;
+    public string? CoverImageUrl { get; set; }
     public long AudioFileSize { get; set; }
     public string AudioContentType { get; set; } = string.Empty;
     public DateTime PublishedAt { get; set; }
@@ -48,6 +49,9 @@ public static class PodcastEpisodeMapper
             SeriesName = episode.SeriesName,
             AudioUrl = fileStorage.GetPublicUrl(episode.AudioFilePath),
             AudioFileName = episode.AudioFileName,
+            CoverImageUrl = string.IsNullOrWhiteSpace(episode.CoverImagePath)
+                ? null
+                : fileStorage.GetImagePublicUrl(episode.CoverImagePath),
             AudioFileSize = episode.AudioFileSize,
             AudioContentType = episode.AudioContentType,
             PublishedAt = episode.PublishedAt,

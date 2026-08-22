@@ -10,6 +10,7 @@ public class PodcastEpisode
     public string? SeriesName { get; set; }
     public string AudioFilePath { get; set; } = string.Empty;
     public string AudioFileName { get; set; } = string.Empty;
+    public string? CoverImagePath { get; set; }
     public long AudioFileSize { get; set; }
     public string AudioContentType { get; set; } = "audio/mpeg";
     public DateTime PublishedAt { get; set; }
