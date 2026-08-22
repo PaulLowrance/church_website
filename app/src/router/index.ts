@@ -42,6 +42,12 @@ const router = createRouter({
       meta: { title: 'Sermons' }
     },
     {
+      path: '/sermon/:id',
+      name: 'sermon-detail',
+      component: () => import('@/views/SermonDetailView.vue'),
+      meta: { title: 'Sermon' }
+    },
+    {
       path: '/admin/podcast',
       name: 'podcast-admin',
       component: () => import('@/views/PodcastAdminView.vue'),
