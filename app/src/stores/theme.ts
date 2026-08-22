@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
+import { Dark } from 'quasar'
 
 export type Theme = 'light' | 'dark' | 'system'
 
@@ -12,16 +13,17 @@ function getInitialTheme(): Theme {
   return 'system'
 }
 
+function isDarkTheme(theme: Theme): boolean {
+  const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+  return theme === 'dark' || (theme === 'system' && systemDark)
+}
+
 function applyTheme(theme: Theme) {
   const root = document.documentElement
-  const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-  const isDark = theme === 'dark' || (theme === 'system' && systemDark)
+  const isDark = isDarkTheme(theme)
 
-  if (isDark) {
-    root.setAttribute('data-theme', 'dark')
-  } else {
-    root.setAttribute('data-theme', 'light')
-  }
+  root.setAttribute('data-theme', isDark ? 'dark' : 'light')
+  Dark.set(isDark)
 }
 
 export const useThemeStore = defineStore('theme', () => {
@@ -39,9 +41,12 @@ export const useThemeStore = defineStore('theme', () => {
   }
 
   function toggle() {
-    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    const currentIsDark = theme.value === 'dark' || (theme.value === 'system' && systemDark)
-    theme.value = currentIsDark ? 'light' : 'dark'
+    // Toggle between light and dark. If currently on system, move to the opposite of the OS preference.
+    if (theme.value === 'system') {
+      theme.value = isDarkTheme('system') ? 'light' : 'dark'
+    } else {
+      theme.value = theme.value === 'dark' ? 'light' : 'dark'
+    }
   }
 
   return { theme, setTheme, toggle }

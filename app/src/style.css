@@ -43,6 +43,17 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Override Quasar brand variables to match the church palette */
+  --q-primary: var(--accent-burgundy);
+  --q-secondary: var(--accent-gold);
+  --q-accent: var(--accent-gold);
+  --q-dark: var(--paper);
+  --q-dark-page: var(--paper);
+  --q-positive: #2e7d32;
+  --q-negative: #c62828;
+  --q-info: #1565c0;
+  --q-warning: #f9a825;
 }
 
 @media (max-width: 1024px) {
@@ -65,6 +76,10 @@
   --shadow:
     rgba(0, 0, 0, 0.35) 0 10px 15px -3px,
     rgba(0, 0, 0, 0.2) 0 4px 6px -2px;
+
+  /* Quasar dark surfaces */
+  --q-dark: #15140f;
+  --q-dark-page: #15140f;
 }
 
 /* Dark mode: system preference when theme is set to 'system' */
@@ -82,6 +97,9 @@
     --shadow:
       rgba(0, 0, 0, 0.35) 0 10px 15px -3px,
       rgba(0, 0, 0, 0.2) 0 4px 6px -2px;
+
+    --q-dark: #15140f;
+    --q-dark-page: #15140f;
   }
 }
 
@@ -100,6 +118,9 @@
     --shadow:
       rgba(0, 0, 0, 0.35) 0 10px 15px -3px,
       rgba(0, 0, 0, 0.2) 0 4px 6px -2px;
+
+    --q-dark: #15140f;
+    --q-dark-page: #15140f;
   }
 }
 
@@ -113,6 +134,7 @@
 body {
   margin: 0;
   min-height: 100vh;
+  font-family: var(--sans);
   background-color: var(--paper);
   color: var(--ink);
 }

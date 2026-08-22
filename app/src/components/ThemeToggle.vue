@@ -1,37 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useThemeStore, type Theme } from '@/stores/theme'
+import { useThemeStore } from '@/stores/theme'
 
 const themeStore = useThemeStore()
 
-const label = computed(() => {
-  switch (themeStore.theme) {
-    case 'light':
-      return 'Switch to dark mode'
-    case 'dark':
-      return 'Switch to light mode'
-    case 'system':
-      return 'Switch theme'
-  }
-})
+const isDark = computed(() => themeStore.theme === 'dark')
 
-const icon = computed(() => {
-  switch (themeStore.theme) {
-    case 'light':
-      return 'sun'
-    case 'dark':
-      return 'moon'
-    case 'system':
-      return 'system'
-  }
-})
-
-function cycleTheme() {
-  const order: Theme[] = ['light', 'dark', 'system']
-  const currentIndex = order.indexOf(themeStore.theme)
-  const nextIndex = (currentIndex + 1) % order.length
-  themeStore.setTheme(order[nextIndex])
-}
+const label = computed(() =>
+  isDark.value ? 'Switch to light mode' : 'Switch to dark mode'
+)
 </script>
 
 <template>
@@ -39,24 +16,18 @@ function cycleTheme() {
     type="button"
     class="theme-toggle"
     :aria-label="label"
-    @click="cycleTheme"
+    @click="themeStore.toggle"
   >
     <span class="theme-toggle__icon" aria-hidden="true">
-      <svg v-if="icon === 'sun'" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <svg v-if="isDark" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="5" />
         <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
       </svg>
-      <svg v-else-if="icon === 'moon'" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <svg v-else class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
       </svg>
-      <svg v-else class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="9" />
-        <path d="M12 3v18" />
-        <path d="M3 12h18" />
-        <path d="M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4" />
-      </svg>
     </span>
-    <span class="theme-toggle__text">{{ themeStore.theme }}</span>
+    <span class="theme-toggle__text">{{ isDark ? 'Dark' : 'Light' }}</span>
   </button>
 </template>
 
