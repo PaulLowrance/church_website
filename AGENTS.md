@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Church website for Brentwood Hills Primitive Baptist Church (bhpbc.org). Replaces an aging Django site. Provides static page management, sermon hosting, and podcast RSS feed.
+Church website for Brentwood Hills Primitive Baptist Church (bhpbc.org), an Independent Primitive Baptist church located in East Fort Worth, Texas, near the Brentwood Hills neighborhood. Replaces an aging Django site. Provides static page management, sermon hosting, and podcast RSS feed.
 
 ## Repository Structure
 

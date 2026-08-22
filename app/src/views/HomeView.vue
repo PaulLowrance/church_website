@@ -8,7 +8,7 @@ import { useAuthStore } from '@/stores/auth'
 
 const SITE_URL = import.meta.env.VITE_SITE_URL || 'https://bhpbc.org'
 const SITE_NAME = 'Brentwood Hills Primitive Baptist Church'
-const DEFAULT_DESCRIPTION = 'Independent Primitive Baptist church in Brentwood, Tennessee. Sermons, service times, and contact information.'
+const DEFAULT_DESCRIPTION = 'Independent Primitive Baptist church in East Fort Worth, Texas, near the Brentwood Hills neighborhood. Sermons, service times, and contact information.'
 
 function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
