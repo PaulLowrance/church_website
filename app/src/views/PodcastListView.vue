@@ -36,7 +36,7 @@ const churchName = ref('')
 const pageTitle = computed(() => 'Sermons')
 const pageDescription = computed(() => {
   const name = churchName.value || SITE_NAME
-  return `Listen to recent sermons from ${name}, an Independent Primitive Baptist church in East Fort Worth, Texas, near the Brentwood Hills neighborhood.` + (episodes.value.length > 0
+  return `Listen to recent sermons from ${name}, a Primitive Baptist church in East Fort Worth, Texas.` + (episodes.value.length > 0
     ? ` Featuring ${episodes.value.length} sermon${episodes.value.length === 1 ? '' : 's'}.`
     : '')
 })
