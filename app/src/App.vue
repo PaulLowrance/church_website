@@ -1,8 +1,11 @@
 <template>
   <q-layout view="hHh lpR fFf">
+    <SkipToMain />
     <NavMenu />
     <q-page-container>
-      <router-view />
+      <main id="main" class="main-content">
+        <router-view />
+      </main>
     </q-page-container>
   </q-layout>
 </template>
@@ -12,6 +15,7 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useSeoMeta } from '@unhead/vue'
 import NavMenu from '@/components/NavMenu.vue'
+import SkipToMain from '@/components/SkipToMain.vue'
 
 const route = useRoute()
 const isNoIndex = computed(() => !!route.meta.noindex)

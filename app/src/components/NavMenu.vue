@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import apiClient from '@/api/client'
 import { useAuthStore } from '@/stores/auth'
+import ThemeToggle from '@/components/ThemeToggle.vue'
 
 interface NavItem {
   slug: string
@@ -75,6 +76,8 @@ function logout() {
           Church Website
         </q-btn>
       </q-toolbar-title>
+
+      <ThemeToggle class="q-mr-sm" />
 
       <!-- Desktop nav -->
       <nav class="gt-sm" role="navigation" aria-label="Main navigation">
