@@ -108,11 +108,8 @@ function closeMenu() {
 .public-nav__bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  width: 100%;
   gap: var(--space-3);
-  flex-wrap: nowrap;
-  max-width: 1200px;
-  margin: 0 auto;
   padding: var(--space-2) var(--space-3);
 }
 
@@ -120,7 +117,6 @@ function closeMenu() {
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
-  margin-left: -0.5rem;
   text-decoration: none;
 }
 
@@ -136,7 +132,9 @@ function closeMenu() {
 
 .public-nav__desktop {
   display: none;
+  flex: 1;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--space-2);
   min-width: 0;
   overflow: hidden;
