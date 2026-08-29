@@ -14,11 +14,13 @@ function getInitialTheme(): Theme {
 }
 
 function isDarkTheme(theme: Theme): boolean {
+  if (typeof window === 'undefined') return theme === 'dark'
   const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches
   return theme === 'dark' || (theme === 'system' && systemDark)
 }
 
 function applyTheme(theme: Theme) {
+  if (typeof document === 'undefined') return
   const root = document.documentElement
   const isDark = isDarkTheme(theme)
 
