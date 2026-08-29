@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useSeoMeta, useHead } from '@unhead/vue'
 import apiClient from '@/api/client'
+import { useSiteInfo, usePodcastEpisodeJsonLd } from '@/composables/useJsonLd'
 
 const SITE_URL = import.meta.env.VITE_SITE_URL || 'https://bhpbc.org'
 const SITE_NAME = 'Brentwood Hills Primitive Baptist Church'
@@ -39,6 +40,9 @@ const transcriptOpen = ref(false)
 const transcriptText = ref('')
 const transcriptLoading = ref(false)
 const transcriptLoadError = ref('')
+
+const { siteInfo, loadSiteInfo } = useSiteInfo()
+usePodcastEpisodeJsonLd(episode, siteInfo)
 
 const pageTitle = computed(() => episode.value ? episode.value.title : 'Sermon')
 const pageDescription = computed(() => {
@@ -103,6 +107,7 @@ function formatFileSize(bytes: number): string {
 }
 
 onMounted(async () => {
+  loadSiteInfo()
   try {
     const response = await apiClient.get(`/podcast/episodes/${episodeId}`)
     episode.value = response.data
