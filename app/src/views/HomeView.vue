@@ -5,6 +5,7 @@ import { useSeoMeta, useHead } from '@unhead/vue'
 import { marked } from 'marked'
 import apiClient from '@/api/client'
 import { useAuthStore } from '@/stores/auth'
+import { useSiteInfo, useChurchJsonLd } from '@/composables/useJsonLd'
 
 const SITE_URL = import.meta.env.VITE_SITE_URL || 'https://bhpbc.org'
 const SITE_NAME = 'Brentwood Hills Primitive Baptist Church'
@@ -47,6 +48,9 @@ const notFound = ref(false)
 const loading = ref(true)
 const latestSermon = ref<LatestSermon | null>(null)
 const sermonLoading = ref(false)
+
+const { siteInfo, loadSiteInfo } = useSiteInfo()
+useChurchJsonLd(siteInfo)
 
 const isHomePage = computed(() => {
   const slug = route.params.slug as string | undefined
@@ -139,6 +143,7 @@ async function loadPage(slug: string) {
 // Load on mount and whenever the slug route param changes
 loadPage(route.params.slug as string || 'home')
 loadLatestSermon()
+loadSiteInfo()
 watch(() => route.params.slug, (newSlug) => {
   loadPage(newSlug as string || 'home')
   loadLatestSermon()
