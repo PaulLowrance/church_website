@@ -13,6 +13,7 @@ const seriesName = ref('')
 const publishedAt = ref(new Date().toISOString().slice(0, 16))
 const tags = ref('')
 const audioFile = ref<File | null>(null)
+const coverImageFile = ref<File | null>(null)
 
 const saving = ref(false)
 const errors = ref<Record<string, string>>({})
@@ -38,6 +39,7 @@ async function saveEpisode() {
     if (seriesName.value) formData.append('seriesName', seriesName.value.trim())
     formData.append('publishedAt', new Date(publishedAt.value).toISOString())
     if (tags.value) formData.append('tags', tags.value)
+    if (coverImageFile.value) formData.append('coverImageFile', coverImageFile.value)
     formData.append('audioFile', audioFile.value!)
 
     await apiClient.post('/podcast/episodes', formData, {
@@ -137,6 +139,22 @@ function goBack() {
             class="q-mb-md"
             aria-label="Tags"
           />
+
+          <div class="q-mb-md">
+            <q-file
+              v-model="coverImageFile"
+              label="Cover Image"
+              accept="image/*"
+              outlined
+              :error="!!errors.coverImageFile"
+              :error-message="errors.coverImageFile"
+              aria-label="Cover image upload"
+            >
+              <template v-slot:prepend>
+                <q-icon name="image" />
+              </template>
+            </q-file>
+          </div>
 
           <div class="q-mb-md">
             <q-file
