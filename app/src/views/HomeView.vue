@@ -146,18 +146,14 @@ watch(() => route.params.slug, (newSlug) => {
 </script>
 
 <template>
-  <q-page padding>
-    <main id="main" class="home-page">
-      <q-banner
+  <div class="home-page">
+      <div
         v-if="!isPublished && authStore.userRole === 'Admin'"
-        class="bg-orange text-white q-mb-md"
+        class="unpublished-banner"
         role="alert"
       >
-        <template v-slot:avatar>
-          <q-icon name="visibility_off" color="white" />
-        </template>
         This page has not been made public yet. Visitors will see a 404 until you publish it.
-      </q-banner>
+      </div>
 
       <section v-if="isHomePage && !sermonLoading" class="hero" aria-labelledby="hero-title">
         <p id="hero-eyebrow" class="hero__eyebrow">This Sunday's Sermon</p>
@@ -225,15 +221,25 @@ watch(() => route.params.slug, (newSlug) => {
           v-html="renderedBody"
         />
       </section>
-    </main>
-  </q-page>
+    </div>
 </template>
 
 <style scoped>
 .home-page {
-  max-width: var(--measure-wide);
+  max-width: 1200px;
   margin: 0 auto;
   padding: var(--space-6) var(--space-4);
+}
+
+.unpublished-banner {
+  background: var(--accent-gold-soft);
+  border: 1px solid var(--accent-gold);
+  color: var(--ink);
+  padding: var(--space-3) var(--space-4);
+  border-radius: 8px;
+  margin-bottom: var(--space-4);
+  font-family: var(--sans);
+  font-size: 0.9375rem;
 }
 
 .hero {

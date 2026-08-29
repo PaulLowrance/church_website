@@ -116,8 +116,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <q-page padding>
-    <main id="main" class="sermon-detail">
+  <div class="sermon-detail">
       <div v-if="loading" class="sermon-detail__loading" aria-live="polite">
         <p>Loading sermon…</p>
       </div>
@@ -209,8 +208,7 @@ onMounted(async () => {
           </ul>
         </div>
       </article>
-    </main>
-  </q-page>
+    </div>
 </template>
 
 <style scoped>
