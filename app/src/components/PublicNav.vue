@@ -101,7 +101,7 @@ function closeMenu() {
   position: sticky;
   top: 0;
   z-index: 50;
-  background: var(--accent-burgundy);
+  background: var(--brand-burgundy);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
 }
 
@@ -109,23 +109,27 @@ function closeMenu() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-4);
+  gap: var(--space-3);
   flex-wrap: nowrap;
   max-width: 1200px;
   margin: 0 auto;
-  padding: var(--space-2) var(--space-4);
+  padding: var(--space-2) var(--space-3);
 }
 
 .public-nav__brand {
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
+  margin-left: -0.5rem;
   text-decoration: none;
 }
 
 .public-nav__logo {
-  height: 40px;
+  height: 38px;
   width: auto;
+  max-width: 220px;
+  object-fit: contain;
+  object-position: left;
   display: block;
   filter: brightness(0) invert(1);
 }
@@ -133,8 +137,9 @@ function closeMenu() {
 .public-nav__desktop {
   display: none;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-2);
   min-width: 0;
+  overflow: hidden;
 }
 
 @media (min-width: 768px) {
@@ -150,7 +155,7 @@ function closeMenu() {
   color: #fff;
   text-decoration: none;
   white-space: nowrap;
-  padding: 0.375rem 0.75rem;
+  padding: 0.375rem 0.5rem;
   border-radius: 6px;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
