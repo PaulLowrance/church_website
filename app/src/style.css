@@ -11,6 +11,12 @@
   --accent-burgundy: #6f2e2a;
   --accent-gold: #b08a3e;
   --accent-gold-soft: rgba(176, 138, 62, 0.12);
+
+  /* Brand constants — do NOT change in dark mode */
+  --brand-burgundy: #6f2e2a;
+  --brand-gold: #b08a3e;
+  --brand-paper: #fbf8f3;
+  --brand-ink: #1c1a17;
   --shadow:
     rgba(0, 0, 0, 0.08) 0 10px 15px -3px,
     rgba(0, 0, 0, 0.04) 0 4px 6px -2px;
@@ -46,9 +52,9 @@
   -moz-osx-font-smoothing: grayscale;
 
   /* Override Quasar brand variables to match the church palette */
-  --q-primary: var(--accent-burgundy);
-  --q-secondary: var(--accent-gold);
-  --q-accent: var(--accent-gold);
+  --q-primary: var(--brand-burgundy);
+  --q-secondary: var(--brand-gold);
+  --q-accent: var(--brand-gold);
   --q-dark: var(--paper);
   --q-dark-page: var(--paper);
   --q-positive: #2e7d32;
@@ -72,7 +78,7 @@
   --ink-soft: #c9c0b0;
   --rule: #2f2a22;
   --muted: #a8987c;
-  --accent-burgundy: #c98a7a;
+  --accent-burgundy: #d99c8a;
   --accent-gold: #d8b566;
   --accent-gold-soft: rgba(216, 181, 102, 0.15);
   --shadow:

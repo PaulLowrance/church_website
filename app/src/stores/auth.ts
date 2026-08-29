@@ -7,12 +7,19 @@ interface AuthState {
   role: string | null
 }
 
-export const useAuthStore = defineStore('auth', {
-  state: (): AuthState => ({
+function readStoredAuth(): AuthState {
+  if (typeof localStorage === 'undefined') {
+    return { token: null, username: null, role: null }
+  }
+  return {
     token: localStorage.getItem('token'),
     username: localStorage.getItem('username'),
     role: localStorage.getItem('role')
-  }),
+  }
+}
+
+export const useAuthStore = defineStore('auth', {
+  state: (): AuthState => readStoredAuth(),
   getters: {
     isAuthenticated: (state) => !!state.token,
     userRole: (state) => state.role
