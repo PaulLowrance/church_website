@@ -175,8 +175,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <q-page padding>
-    <main id="main" class="sermon-list">
+  <div class="sermon-list">
       <header class="sermon-list__header">
         <h1 class="sermon-list__title">Sermons</h1>
         <p class="sermon-list__intro">
@@ -187,14 +186,13 @@ onMounted(() => {
         </p>
       </header>
 
-      <q-inner-loading v-if="loading" showing color="primary" label="Loading episodes..." />
+      <div v-if="loading" class="sermon-list__loading" aria-live="polite">
+        Loading episodes…
+      </div>
 
-      <q-banner v-if="error" class="bg-negative text-white q-mb-md" role="alert">
-        <template v-slot:avatar>
-          <q-icon name="error" color="white" />
-        </template>
+      <div v-if="error" class="sermon-list__error" role="alert">
         {{ error }}
-      </q-banner>
+      </div>
 
       <div class="sermon-list__layout">
         <aside class="filter-sidebar" aria-label="Sermon filters">
@@ -468,8 +466,7 @@ onMounted(() => {
           </form>
         </div>
       </dialog>
-    </main>
-  </q-page>
+    </div>
 </template>
 
 <style scoped>
@@ -502,6 +499,18 @@ onMounted(() => {
 .sermon-list__subscribe {
   display: inline;
   margin-left: 0.25rem;
+}
+
+.sermon-list__loading,
+.sermon-list__error {
+  text-align: center;
+  padding: var(--space-8) 0;
+  color: var(--muted);
+  font-family: var(--sans);
+}
+
+.sermon-list__error {
+  color: var(--accent-burgundy);
 }
 
 .sermon-list__empty {
