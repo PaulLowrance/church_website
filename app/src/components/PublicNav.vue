@@ -134,7 +134,7 @@ function closeMenu() {
   display: none;
   flex: 1;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
   gap: var(--space-2);
   min-width: 0;
   overflow: hidden;
