@@ -21,6 +21,13 @@ public class PageRepository(DbConnectionFactory factory) : IPageRepository
         return await conn.QueryAsync<Page>("SELECT * FROM pages ORDER BY title");
     }
 
+    public async Task<IEnumerable<Page>> GetPublishedPagesAsync()
+    {
+        using var conn = factory.CreateConnection();
+        return await conn.QueryAsync<Page>(
+            "SELECT * FROM pages WHERE is_published = TRUE ORDER BY title");
+    }
+
     public async Task<IEnumerable<Page>> GetNavPagesAsync()
     {
         using var conn = factory.CreateConnection();

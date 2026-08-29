@@ -50,6 +50,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
+// In-memory cache for the sitemap endpoint
+builder.Services.AddMemoryCache();
+
 // CORS for Vite dev server proxy
 builder.Services.AddCors(options =>
 {
