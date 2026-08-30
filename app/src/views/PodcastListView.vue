@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useSeoMeta, useHead } from '@unhead/vue'
 import apiClient from '@/api/client'
+import AudioPlayer from '@/components/AudioPlayer.vue'
 
 const SITE_URL = import.meta.env.VITE_SITE_URL || 'https://bhpbc.org'
 const SITE_NAME = 'Brentwood Hills Primitive Baptist Church'
@@ -16,6 +17,7 @@ interface PodcastEpisode {
   seriesName: string | null
   audioUrl: string
   audioFileName: string
+  audioFileSize: number
   coverImageUrl: string | null
   audioContentType: string
   publishedAt: string
@@ -355,25 +357,12 @@ onMounted(() => {
             </p>
 
             <div class="sermon-card__actions">
-              <audio
-                controls
-                preload="none"
-                class="sermon-card__audio"
-                :aria-label="`Audio player for ${episode.title}`"
-              >
-                <source :src="episode.audioUrl" :type="episode.audioContentType" />
-                Your browser does not support the audio element.
-              </audio>
-              <a
-                class="sermon-card__download"
-                :href="episode.audioUrl"
-                :download="episode.audioFileName"
-                target="_blank"
-                :aria-label="`Download ${episode.title}`"
-                title="Download audio"
-              >
-                ↓
-              </a>
+              <AudioPlayer
+                :src="episode.audioUrl"
+                :file-name="episode.audioFileName"
+                :file-size="episode.audioFileSize"
+                :title="episode.title"
+              />
             </div>
           </div>
         </article>
@@ -656,37 +645,6 @@ onMounted(() => {
   gap: var(--space-2);
   margin-top: auto;
   padding-top: var(--space-3);
-}
-
-.sermon-card__audio {
-  flex: 1;
-  min-width: 0;
-  height: 40px;
-}
-
-.sermon-card__download {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  flex-shrink: 0;
-  border: 1px solid var(--rule);
-  border-radius: 8px;
-  color: var(--accent-burgundy);
-  text-decoration: none;
-  font-size: 1.25rem;
-  transition: background-color 0.2s ease;
-}
-
-.sermon-card__download:hover {
-  background: var(--accent-gold-soft);
-  border-color: var(--accent-gold);
-}
-
-audio {
-  max-width: 100%;
-  width: 100%;
 }
 
 .sermon-list__layout {
