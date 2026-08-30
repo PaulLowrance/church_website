@@ -145,10 +145,15 @@ onMounted(async () => {
         <div
           v-if="episode.coverImageUrl"
           class="sermon-detail__cover"
-          :style="{ backgroundImage: `url(${episode.coverImageUrl})` }"
-          role="img"
-          :aria-label="`Cover image for ${episode.title}`"
-        />
+        >
+          <img
+            :src="episode.coverImageUrl"
+            :alt="episode.title"
+            class="sermon-detail__cover-image"
+            loading="eager"
+            decoding="async"
+          />
+        </div>
 
         <div class="sermon-detail__audio">
           <audio
@@ -266,11 +271,24 @@ onMounted(async () => {
 
 .sermon-detail__cover {
   width: 100%;
-  aspect-ratio: 16 / 9;
-  background-size: cover;
-  background-position: center;
+  max-height: 420px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--panel);
+  border: 1px solid var(--rule);
   border-radius: 12px;
   box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.sermon-detail__cover-image {
+  max-width: 100%;
+  max-height: 420px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
 }
 
 .sermon-detail__audio {

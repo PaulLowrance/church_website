@@ -7,6 +7,7 @@ public class PodcastEpisode
     public string? SpeakerTitle { get; set; }
     public string SpeakerName { get; set; } = string.Empty;
     public string? Description { get; set; }
+    public string? Scripture { get; set; }
     public string? SeriesName { get; set; }
     public string AudioFilePath { get; set; } = string.Empty;
     public string AudioFileName { get; set; } = string.Empty;

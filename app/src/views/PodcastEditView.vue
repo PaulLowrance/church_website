@@ -11,6 +11,7 @@ const title = ref('')
 const speakerTitle = ref('')
 const speakerName = ref('')
 const description = ref('')
+const scripture = ref('')
 const seriesName = ref('')
 const publishedAt = ref('')
 const tags = ref('')
@@ -123,6 +124,7 @@ onMounted(async () => {
     speakerTitle.value = episode.speakerTitle || ''
     speakerName.value = episode.speakerName
     description.value = episode.description || ''
+    scripture.value = episode.scripture || ''
     seriesName.value = episode.seriesName || ''
     publishedAt.value = new Date(episode.publishedAt).toISOString().slice(0, 16)
     tags.value = episode.tags.join(', ')
@@ -158,6 +160,7 @@ async function saveEpisode() {
     if (speakerTitle.value.trim()) formData.append('speakerTitle', speakerTitle.value.trim())
     formData.append('speakerName', speakerName.value.trim())
     if (description.value) formData.append('description', description.value.trim())
+    if (scripture.value.trim()) formData.append('scripture', scripture.value.trim())
     if (seriesName.value) formData.append('seriesName', seriesName.value.trim())
     formData.append('publishedAt', new Date(publishedAt.value).toISOString())
     if (tags.value) formData.append('tags', tags.value)
@@ -251,6 +254,15 @@ function goBack() {
             rows="4"
             class="q-mb-md"
             aria-label="Sermon description"
+          />
+
+          <q-input
+            v-model="scripture"
+            label="Scripture Reference"
+            hint="e.g. 1 John 1:1-4"
+            outlined
+            class="q-mb-md"
+            aria-label="Scripture reference"
           />
 
           <q-input

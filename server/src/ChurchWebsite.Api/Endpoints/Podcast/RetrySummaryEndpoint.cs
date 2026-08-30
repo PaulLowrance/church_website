@@ -92,6 +92,6 @@ public class RetrySummaryEndpoint(
             return;
         }
 
-        await Send.OkAsync(PodcastEpisodeMapper.ToDto(episode, fileStorage, abbr), cancellation: ct);
+        await Send.OkAsync(PodcastEpisodeMapper.ToDto(episode, fileStorage, abbr, configuration), cancellation: ct);
     }
 }

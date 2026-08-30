@@ -1,6 +1,7 @@
 using System.Data;
 using System.Text.RegularExpressions;
 using Dapper;
+using ChurchWebsite.Core;
 using ChurchWebsite.Core.Entities;
 using ChurchWebsite.Core.Interfaces;
 using ChurchWebsite.Infrastructure.Data;
@@ -53,6 +54,60 @@ public class PodcastEpisodeRepository(DbConnectionFactory factory) : IPodcastEpi
         return episodes;
     }
 
+    public async Task<IEnumerable<PodcastEpisode>> GetFilteredAsync(PodcastEpisodeFilter filter)
+    {
+        using var conn = factory.CreateConnection();
+        var conditions = new List<string> { "published_at <= @now" };
+        var parameters = new DynamicParameters();
+        parameters.Add("now", DateTime.UtcNow);
+
+        if (!string.IsNullOrWhiteSpace(filter.Series))
+        {
+            conditions.Add("series_name = @series");
+            parameters.Add("series", filter.Series);
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter.Speaker))
+        {
+            conditions.Add("speaker_name = @speaker");
+            parameters.Add("speaker", filter.Speaker);
+        }
+
+        if (filter.Scriptures.Count > 0)
+        {
+            var scriptureConditions = filter.Scriptures
+                .Select((s, i) => $"scripture ILIKE @scripture_{i}")
+                .ToList();
+            conditions.Add($"({string.Join(" OR ", scriptureConditions)})");
+            for (var i = 0; i < filter.Scriptures.Count; i++)
+            {
+                parameters.Add($"scripture_{i}", $"%{filter.Scriptures[i]}%");
+            }
+        }
+
+        if (filter.Year.HasValue)
+        {
+            conditions.Add("EXTRACT(YEAR FROM published_at) = @year");
+            parameters.Add("year", filter.Year.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter.Search))
+        {
+            conditions.Add("(title ILIKE @search OR speaker_name ILIKE @search OR description ILIKE @search)");
+            parameters.Add("search", $"%{filter.Search}%");
+        }
+
+        var sql = $@"SELECT * FROM podcast_episodes WHERE {string.Join(" AND ", conditions)} ORDER BY published_at DESC";
+        var episodes = await conn.QueryAsync<PodcastEpisode>(sql, parameters);
+
+        foreach (var episode in episodes)
+        {
+            episode.Tags = (await GetTagsAsync(episode.Id)).ToList();
+        }
+
+        return episodes;
+    }
+
     public async Task<IEnumerable<PodcastEpisode>> GetByTranscriptStatusAsync(string status)
     {
         using var conn = factory.CreateConnection();
@@ -72,8 +127,8 @@ public class PodcastEpisodeRepository(DbConnectionFactory factory) : IPodcastEpi
     {
         using var conn = factory.CreateConnection();
         await conn.ExecuteAsync(
-            @"INSERT INTO podcast_episodes (id, title, speaker_title, speaker_name, description, series_name, audio_file_path, audio_file_name, cover_image_path, audio_file_size, audio_content_type, published_at, created_at, updated_at, transcript_status, transcript_file_path, assemblyai_transcript_id, transcript_error, summary_status, summary_error)
-              VALUES (@Id, @Title, @SpeakerTitle, @SpeakerName, @Description, @SeriesName, @AudioFilePath, @AudioFileName, @CoverImagePath, @AudioFileSize, @AudioContentType, @PublishedAt, @CreatedAt, @UpdatedAt, @TranscriptStatus, @TranscriptFilePath, @AssemblyAiTranscriptId, @TranscriptError, @SummaryStatus, @SummaryError)",
+            @"INSERT INTO podcast_episodes (id, title, speaker_title, speaker_name, description, scripture, series_name, audio_file_path, audio_file_name, cover_image_path, audio_file_size, audio_content_type, published_at, created_at, updated_at, transcript_status, transcript_file_path, assemblyai_transcript_id, transcript_error, summary_status, summary_error)
+              VALUES (@Id, @Title, @SpeakerTitle, @SpeakerName, @Description, @Scripture, @SeriesName, @AudioFilePath, @AudioFileName, @CoverImagePath, @AudioFileSize, @AudioContentType, @PublishedAt, @CreatedAt, @UpdatedAt, @TranscriptStatus, @TranscriptFilePath, @AssemblyAiTranscriptId, @TranscriptError, @SummaryStatus, @SummaryError)",
             episode);
 
         await SetTagsAsync(episode.Id, episode.Tags);
@@ -83,7 +138,7 @@ public class PodcastEpisodeRepository(DbConnectionFactory factory) : IPodcastEpi
     {
         using var conn = factory.CreateConnection();
         await conn.ExecuteAsync(
-            @"UPDATE podcast_episodes SET title = @Title, speaker_title = @SpeakerTitle, speaker_name = @SpeakerName, description = @Description, series_name = @SeriesName, audio_file_path = @AudioFilePath, audio_file_name = @AudioFileName, cover_image_path = @CoverImagePath, audio_file_size = @AudioFileSize, audio_content_type = @AudioContentType, published_at = @PublishedAt, updated_at = @UpdatedAt, transcript_status = @TranscriptStatus, transcript_file_path = @TranscriptFilePath, assemblyai_transcript_id = @AssemblyAiTranscriptId, transcript_error = @TranscriptError, summary_status = @SummaryStatus, summary_error = @SummaryError WHERE id = @Id",
+            @"UPDATE podcast_episodes SET title = @Title, speaker_title = @SpeakerTitle, speaker_name = @SpeakerName, description = @Description, scripture = @Scripture, series_name = @SeriesName, audio_file_path = @AudioFilePath, audio_file_name = @AudioFileName, cover_image_path = @CoverImagePath, audio_file_size = @AudioFileSize, audio_content_type = @AudioContentType, published_at = @PublishedAt, updated_at = @UpdatedAt, transcript_status = @TranscriptStatus, transcript_file_path = @TranscriptFilePath, assemblyai_transcript_id = @AssemblyAiTranscriptId, transcript_error = @TranscriptError, summary_status = @SummaryStatus, summary_error = @SummaryError WHERE id = @Id",
             episode);
 
         await SetTagsAsync(episode.Id, episode.Tags);
