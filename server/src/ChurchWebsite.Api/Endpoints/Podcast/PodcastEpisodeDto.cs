@@ -13,6 +13,7 @@ public class PodcastEpisodeDto
     public string SpeakerName { get; set; } = string.Empty;
     public string SpeakerDisplay { get; set; } = string.Empty;
     public string? Description { get; set; }
+    public string? Scripture { get; set; }
     public string? SeriesName { get; set; }
     public string AudioUrl { get; set; } = string.Empty;
     public string AudioFileName { get; set; } = string.Empty;
@@ -34,9 +35,12 @@ public static class PodcastEpisodeMapper
     public static PodcastEpisodeDto ToDto(
         PodcastEpisode episode,
         IFileStorageService fileStorage,
-        IReadOnlyDictionary<string, string> titleAbbreviations)
+        IReadOnlyDictionary<string, string> titleAbbreviations,
+        IConfiguration? configuration = null)
     {
         var variants = SpeakerFormatter.Format(episode.SpeakerTitle, episode.SpeakerName, titleAbbreviations);
+
+        var coverImageUrl = ResolveCoverImageUrl(episode, fileStorage, configuration);
 
         return new PodcastEpisodeDto
         {
@@ -46,12 +50,11 @@ public static class PodcastEpisodeMapper
             SpeakerName = episode.SpeakerName,
             SpeakerDisplay = variants.FullFormal,
             Description = episode.Description,
+            Scripture = episode.Scripture,
             SeriesName = episode.SeriesName,
             AudioUrl = fileStorage.GetPublicUrl(episode.AudioFilePath),
             AudioFileName = episode.AudioFileName,
-            CoverImageUrl = string.IsNullOrWhiteSpace(episode.CoverImagePath)
-                ? null
-                : fileStorage.GetImagePublicUrl(episode.CoverImagePath),
+            CoverImageUrl = coverImageUrl,
             AudioFileSize = episode.AudioFileSize,
             AudioContentType = episode.AudioContentType,
             PublishedAt = episode.PublishedAt,
@@ -65,6 +68,25 @@ public static class PodcastEpisodeMapper
             SummaryError = episode.SummaryError,
             Tags = episode.Tags
         };
+    }
+
+    private static string ResolveCoverImageUrl(
+        PodcastEpisode episode,
+        IFileStorageService fileStorage,
+        IConfiguration? configuration)
+    {
+        if (!string.IsNullOrWhiteSpace(episode.CoverImagePath))
+        {
+            return fileStorage.GetImagePublicUrl(episode.CoverImagePath);
+        }
+
+        var defaultImage = configuration?["Storage:DefaultCoverImage"];
+        if (!string.IsNullOrWhiteSpace(defaultImage))
+        {
+            return fileStorage.GetImagePublicUrl(defaultImage);
+        }
+
+        return string.Empty;
     }
 
     /// <summary>

@@ -12,6 +12,7 @@ public class CreatePodcastEpisodeRequest
     public string? SpeakerTitle { get; set; }
     public string SpeakerName { get; set; } = string.Empty;
     public string? Description { get; set; }
+    public string? Scripture { get; set; }
     public string? SeriesName { get; set; }
     public DateTime PublishedAt { get; set; }
     public string? Tags { get; set; }
@@ -94,6 +95,7 @@ public class CreatePodcastEpisodeEndpoint(
             SpeakerTitle = string.IsNullOrWhiteSpace(req.SpeakerTitle) ? null : req.SpeakerTitle.Trim(),
             SpeakerName = req.SpeakerName.Trim(),
             Description = req.Description?.Trim(),
+            Scripture = string.IsNullOrWhiteSpace(req.Scripture) ? null : req.Scripture.Trim(),
             SeriesName = req.SeriesName?.Trim(),
             AudioFilePath = audioFilePath,
             CoverImagePath = coverImagePath,

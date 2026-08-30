@@ -12,6 +12,7 @@ public class UpdatePodcastEpisodeRequest
     public string? SpeakerTitle { get; set; }
     public string SpeakerName { get; set; } = string.Empty;
     public string? Description { get; set; }
+    public string? Scripture { get; set; }
     public string? SeriesName { get; set; }
     public DateTime PublishedAt { get; set; }
     public string? Tags { get; set; }
@@ -119,6 +120,7 @@ public class UpdatePodcastEpisodeEndpoint(
         episode.SpeakerTitle = string.IsNullOrWhiteSpace(req.SpeakerTitle) ? null : req.SpeakerTitle.Trim();
         episode.SpeakerName = req.SpeakerName.Trim();
         episode.Description = req.Description?.Trim();
+        episode.Scripture = string.IsNullOrWhiteSpace(req.Scripture) ? null : req.Scripture.Trim();
         episode.SeriesName = req.SeriesName?.Trim();
         episode.PublishedAt = req.PublishedAt.Kind == DateTimeKind.Unspecified
             ? DateTime.SpecifyKind(req.PublishedAt, DateTimeKind.Utc)
@@ -130,7 +132,7 @@ public class UpdatePodcastEpisodeEndpoint(
 
         var abbr = PodcastEpisodeMapper.LoadTitleAbbreviations(configuration);
         await Send.ResponseAsync(
-            PodcastEpisodeMapper.ToDto(episode, fileStorage, abbr),
+            PodcastEpisodeMapper.ToDto(episode, fileStorage, abbr, configuration),
             StatusCodes.Status202Accepted,
             cancellation: ct);
     }

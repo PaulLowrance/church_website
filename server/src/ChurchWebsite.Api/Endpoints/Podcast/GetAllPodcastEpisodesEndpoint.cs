@@ -20,7 +20,7 @@ public class GetAllPodcastEpisodesEndpoint(
     {
         var episodes = await repo.GetAllAsync();
         var abbr = PodcastEpisodeMapper.LoadTitleAbbreviations(configuration);
-        var dtos = episodes.Select(e => PodcastEpisodeMapper.ToDto(e, fileStorage, abbr)).ToList();
+        var dtos = episodes.Select(e => PodcastEpisodeMapper.ToDto(e, fileStorage, abbr, configuration)).ToList();
         await Send.OkAsync(dtos, cancellation: ct);
     }
 }
