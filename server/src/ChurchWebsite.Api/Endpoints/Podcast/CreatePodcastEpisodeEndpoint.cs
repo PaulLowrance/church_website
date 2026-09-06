@@ -29,6 +29,7 @@ public class CreatePodcastEpisodeResponse
 public class CreatePodcastEpisodeEndpoint(
     IPodcastEpisodeRepository repo,
     IFileStorageService fileStorage,
+    ISermonPlaceholderImageGenerator placeholderGenerator,
     IConfiguration configuration,
     ILogger<CreatePodcastEpisodeEndpoint> logger) : Endpoint<CreatePodcastEpisodeRequest, CreatePodcastEpisodeResponse>
 {
@@ -111,6 +112,18 @@ public class CreatePodcastEpisodeEndpoint(
             TranscriptStatus = TranscriptionStatuses.PendingSubmit,
             SummaryStatus = TranscriptionStatuses.None
         };
+
+        if (string.IsNullOrWhiteSpace(episode.CoverImagePath))
+        {
+            try
+            {
+                episode.CoverImagePath = await placeholderGenerator.GenerateAsync(episode, ct);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to generate placeholder image for episode {EpisodeId}. Falling back to default placeholder.", episode.Id);
+            }
+        }
 
         await repo.CreateAsync(episode);
 
