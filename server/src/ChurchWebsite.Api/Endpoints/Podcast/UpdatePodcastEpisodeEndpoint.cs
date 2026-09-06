@@ -23,6 +23,7 @@ public class UpdatePodcastEpisodeRequest
 public class UpdatePodcastEpisodeEndpoint(
     IPodcastEpisodeRepository repo,
     IFileStorageService fileStorage,
+    ISermonPlaceholderImageGenerator placeholderGenerator,
     IConfiguration configuration,
     ILogger<UpdatePodcastEpisodeEndpoint> logger) : Endpoint<UpdatePodcastEpisodeRequest, PodcastEpisodeDto>
 {
@@ -127,6 +128,19 @@ public class UpdatePodcastEpisodeEndpoint(
             : req.PublishedAt.ToUniversalTime();
         episode.UpdatedAt = DateTime.UtcNow;
         episode.Tags = ParseTags(req.Tags);
+
+        if (!coverImageReplaced &&
+            (string.IsNullOrWhiteSpace(episode.CoverImagePath) || placeholderGenerator.IsPlaceholderImage(episode.CoverImagePath)))
+        {
+            try
+            {
+                episode.CoverImagePath = await placeholderGenerator.GenerateAsync(episode, ct);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to regenerate placeholder image for episode {EpisodeId}. Keeping existing cover image.", episode.Id);
+            }
+        }
 
         await repo.UpdateAsync(episode);
 

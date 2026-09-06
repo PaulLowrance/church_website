@@ -71,7 +71,7 @@ function logout() {
         @click="drawerOpen = !drawerOpen"
         class="lt-md"
       />
-      <q-toolbar-title>
+      <q-toolbar-title class="lt-md">
         <router-link to="/" aria-label="Brentwood Hills Primitive Baptist Church home">
           <img
             src="/uploads/images/bhpbc-header-footer.svg"
@@ -81,7 +81,19 @@ function logout() {
         </router-link>
       </q-toolbar-title>
 
-      <ThemeToggle class="q-mr-sm" />
+      <router-link
+        to="/"
+        class="gt-sm"
+        aria-label="Brentwood Hills Primitive Baptist Church home"
+      >
+        <img
+          src="/uploads/images/bhpbc-header-footer.svg"
+          alt="Brentwood Hills Primitive Baptist Church"
+          class="header-logo"
+        />
+      </router-link>
+
+      <q-space class="gt-sm" />
 
       <!-- Desktop nav -->
       <nav class="gt-sm" role="navigation" aria-label="Main navigation">
@@ -150,6 +162,10 @@ function logout() {
           Login
         </q-btn>
       </nav>
+
+      <q-space class="gt-sm" />
+
+      <ThemeToggle class="q-mr-sm" />
     </q-toolbar>
   </q-header>
 

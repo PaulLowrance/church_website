@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useSeoMeta, useHead } from '@unhead/vue'
 import apiClient from '@/api/client'
+import AudioPlayer from '@/components/AudioPlayer.vue'
 
 const SITE_URL = import.meta.env.VITE_SITE_URL || 'https://bhpbc.org'
 const SITE_NAME = 'Brentwood Hills Primitive Baptist Church'
@@ -94,14 +95,6 @@ function formatDate(dateStr: string): string {
   })
 }
 
-function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 Bytes'
-  const k = 1024
-  const sizes = ['Bytes', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-}
-
 onMounted(async () => {
   try {
     const response = await apiClient.get(`/podcast/episodes/${episodeId}`)
@@ -156,25 +149,12 @@ onMounted(async () => {
         </div>
 
         <div class="sermon-detail__audio">
-          <audio
-            controls
-            preload="none"
-            class="sermon-detail__player"
-            :aria-label="`Audio player for ${episode.title}`"
-          >
-            <source :src="episode.audioUrl" :type="episode.audioContentType" />
-            Your browser does not support the audio element.
-          </audio>
-          <div class="sermon-detail__audio-actions">
-            <a
-              class="btn btn--secondary"
-              :href="episode.audioUrl"
-              :download="episode.audioFileName"
-              target="_blank"
-            >
-              Download audio ({{ formatFileSize(episode.audioFileSize) }})
-            </a>
-          </div>
+          <AudioPlayer
+            :src="episode.audioUrl"
+            :file-name="episode.audioFileName"
+            :file-size="episode.audioFileSize"
+            :title="episode.title"
+          />
         </div>
 
         <div v-if="episode.description" class="sermon-detail__description prose">
@@ -292,22 +272,10 @@ onMounted(async () => {
 }
 
 .sermon-detail__audio {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
   padding: var(--space-4);
   background: var(--panel);
   border-radius: 12px;
   border: 1px solid var(--rule);
-}
-
-.sermon-detail__player {
-  width: 100%;
-}
-
-.sermon-detail__audio-actions {
-  display: flex;
-  justify-content: flex-end;
 }
 
 .sermon-detail__description {
