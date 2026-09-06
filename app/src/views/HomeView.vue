@@ -140,10 +140,13 @@ async function loadPage(slug: string) {
   }
 }
 
-// Load on mount and whenever the slug route param changes
-loadPage(route.params.slug as string || 'home')
-loadLatestSermon()
-loadSiteInfo()
+// Load on mount and whenever the slug route param changes.
+// Skip during SSR/prerender (vite-ssg): content hydrates client-side.
+if (typeof window !== 'undefined') {
+  loadPage(route.params.slug as string || 'home')
+  loadLatestSermon()
+  loadSiteInfo()
+}
 watch(() => route.params.slug, (newSlug) => {
   loadPage(newSlug as string || 'home')
   loadLatestSermon()

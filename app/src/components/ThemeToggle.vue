@@ -37,10 +37,10 @@ const label = computed(() =>
   align-items: center;
   gap: 0.375rem;
   padding: 0.375rem 0.75rem;
-  border: 1px solid var(--rule);
+  border: 1px solid var(--toggle-border, var(--rule));
   border-radius: 9999px;
   background: transparent;
-  color: var(--ink);
+  color: var(--toggle-color, var(--ink));
   font-family: var(--sans);
   font-size: 0.875rem;
   line-height: 1;
@@ -49,7 +49,7 @@ const label = computed(() =>
 }
 
 .theme-toggle:hover {
-  background: var(--rule);
+  background: var(--toggle-hover, var(--rule));
 }
 
 .theme-toggle:focus-visible {

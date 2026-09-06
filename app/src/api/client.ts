@@ -1,6 +1,5 @@
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
-import router from '@/router'
 
 const apiClient = axios.create({
   baseURL: '/api'
@@ -20,7 +19,9 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       const authStore = useAuthStore()
       authStore.logout()
-      router.push('/login')
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login'
+      }
     }
     return Promise.reject(error)
   }
