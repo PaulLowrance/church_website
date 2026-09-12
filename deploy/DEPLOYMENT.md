@@ -30,7 +30,7 @@ systemctl enable --now docker
 
 ### 1.3 GitHub Actions SSH access
 
-Create a dedicated keypair for the pipeline. **Do not use the deployer user's personal key.**
+Create a dedicated keypair for the pipeline. **Do not use the deployer user's personal key.** The private key **must have an empty passphrase** — GitHub Actions is non-interactive, so a passphrase-protected key fails with `Permission denied (publickey)`.
 
 ```bash
 sudo -u deployer mkdir -p /home/deployer/.ssh
@@ -38,6 +38,12 @@ sudo -u deployer ssh-keygen -t ed25519 -f /home/deployer/.ssh/github-actions -N 
 sudo -u deployer bash -c 'cat /home/deployer/.ssh/github-actions.pub >> /home/deployer/.ssh/authorized_keys'
 chmod 700 /home/deployer/.ssh
 chmod 600 /home/deployer/.ssh/authorized_keys /home/deployer/.ssh/github-actions
+```
+
+Verify it connects without prompting for a passphrase:
+
+```bash
+sudo -u deployer ssh -i /home/deployer/.ssh/github-actions -o BatchMode=yes deployer@localhost true
 ```
 
 Copy the **private** key (`/home/deployer/.ssh/github-actions`) into the GitHub Actions secret later (see section 2).
