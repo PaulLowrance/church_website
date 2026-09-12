@@ -1,7 +1,9 @@
 [Unit]
 Description=Church Website API
-Wants=network-online.target postgresql.service
-After=network-online.target postgresql.service
+# Postgres runs in a Docker container (see deploy/postgres/docker-compose.yml);
+# its `restart: unless-stopped` policy brings it up once docker is running.
+Wants=network-online.target docker.service
+After=network-online.target docker.service
 
 [Service]
 Type=simple

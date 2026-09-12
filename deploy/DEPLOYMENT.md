@@ -4,9 +4,9 @@ The site is built in GitHub Actions and deployed to Linode VPS servers via rsync
 
 - **nginx** — serves the static Vue build and reverse-proxies `/api`, `/podcast/rss`, and `/uploads` to the API
 - **ChurchWebsite.Api** — .NET 10 self-contained binary running as a systemd service on `127.0.0.1:5001`
-- **PostgreSQL 16** — native install, schema created automatically by `DbInitializer` on first startup
+- **PostgreSQL 16** — Docker container (managed by Compose), bound to `127.0.0.1:5432`; schema created automatically by `DbInitializer` on first startup
 
-No Docker is needed on the server for the app itself (only the API binary, the static frontend, and Postgres).
+Postgres is the **only** thing containerized on the server — chosen so it stays isolated from the other apps on this shared VPS (own version, own data volume, own lifecycle). The app itself runs natively (API binary + static frontend).
 
 ---
 
@@ -22,8 +22,11 @@ Add a DNS `A` record for `dev.bhpbc.org` (or whatever dev domain you use) pointi
 
 ```bash
 apt update && apt upgrade -y
-apt install -y nginx postgresql rsync ufw curl
+apt install -y nginx rsync ufw curl docker.io docker-compose-v2
+systemctl enable --now docker
 ```
+
+> On a shared VPS, avoid exposing Postgres directly. The container below binds to `127.0.0.1` only.
 
 ### 1.3 GitHub Actions SSH access
 
@@ -56,13 +59,33 @@ chown -R deployer:deployer /opt/church-website
 chmod 750 /opt/church-website/storage
 ```
 
-### 1.5 PostgreSQL
+### 1.5 PostgreSQL (Docker container)
 
 ```bash
-systemctl enable --now postgresql
-sudo -u postgres psql -c "CREATE USER church_website WITH PASSWORD 'CHANGE_ME_DB_PASSWORD';"
-sudo -u postgres psql -c "CREATE DATABASE church_website OWNER church_website;"
+mkdir -p /opt/church-website/postgres
+cp /home/plowrance/church-website/deploy/postgres/docker-compose.yml /opt/church-website/postgres/
+
+# The DB password lives in a local .env next to the compose file (not in git)
+cat > /opt/church-website/postgres/.env <<'EOF'
+POSTGRES_PASSWORD=CHANGE_ME_DB_PASSWORD
+EOF
+chmod 600 /opt/church-website/postgres/.env
+
+docker compose -f /opt/church-website/postgres/docker-compose.yml up -d
+docker compose -f /opt/church-website/postgres/docker-compose.yml ps   # confirm healthy
 ```
+
+This creates a `church_website` database owned by user `church_website`, reachable only at `127.0.0.1:5432`. Data is stored in the named volume `church_website_pgdata`, so the container can be upgraded/recreated without losing data, and `restart: unless-stopped` brings it back on boot.
+
+**Backups** (do this early — a shared host has no protection from `docker compose down -v`):
+
+```bash
+mkdir -p /var/backups/church-website
+docker exec church-website-postgres pg_dump -U church_website -d church_website \
+  > /var/backups/church-website/$(date +%F).sql
+```
+
+Add it to root's crontab (`crontab -e`): `30 3 * * * docker exec church-website-postgres pg_dump -U church_website -d church_website > /var/backups/church-website/$(date +\%F).sql`
 
 ### 1.6 Application configuration
 
@@ -77,7 +100,7 @@ chmod 600 /opt/church-website/server/appsettings.Production.json
 
 Edit it and set real values:
 
-- `ConnectionStrings:DefaultConnection` — the Postgres password from 1.5
+- `ConnectionStrings:DefaultConnection` — the Postgres password from the `.env` in 1.5
 - `Jwt:Key` — a long random string (e.g. `openssl rand -base64 48`)
 - `AssemblyAI:ApiKey` — real key (or supply via `/etc/church-website/api.env` instead; see 1.7)
 - `Podcast:BaseUrl` — the dev domain, e.g. `https://dev.bhpbc.org`
@@ -189,9 +212,9 @@ journalctl -u church-website-api -n 50
 - Install a TLS cert: `apt install certbot python3-certbot-nginx && certbot --nginx -d bhpbc.org`.
 - Add `server_name bhpbc.org` (and any www variant) to the nginx config and swap the `Podcast:BaseUrl`.
 - Change the seeded admin password after first login:
-  ```sql
-  sudo -u postgres psql -d church_website
+  ```bash
+  docker exec -it church-website-postgres psql -U church_website -d church_website
   UPDATE users SET password_hash = crypt('NEW_STRONG_PASSWORD', gen_salt('bf')) WHERE username = 'admin';
   ```
   (requires `CREATE EXTENSION pgcrypto;` if not already available)
-- Consider adding a `Backup` job (e.g. `pg_dump` on a cron/systemd timer).
+- Keep the `pg_dump` backup cron from section 1.5 running, and periodically test a restore.

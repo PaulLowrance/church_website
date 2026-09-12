@@ -1,0 +1,32 @@
+# Server-side PostgreSQL for the Church Website (Docker Compose)
+#
+# Copy this to /opt/church-website/postgres/docker-compose.yml and create a
+# sibling .env file with POSTGRES_PASSWORD set (see deploy/DEPLOYMENT.md).
+# Only Postgres runs in a container on the server; the API and nginx run natively.
+#
+# Data lives in the named volume `church_website_pgdata` (persists across
+# container upgrades). Back it up with pg_dump — see DEPLOYMENT.md section 1.5.
+#
+# Bound to 127.0.0.1 only so other apps on this shared VPS never see it.
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: church-website-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: church_website
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: church_website
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - church_website_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U church_website"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  church_website_pgdata:
