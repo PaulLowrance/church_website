@@ -59,11 +59,30 @@ chown -R deployer:deployer /opt/church-website
 chmod 750 /opt/church-website/storage
 ```
 
-### 1.5 PostgreSQL (Docker container)
+### 1.5 Deployment files
+
+The remaining steps copy templates out of the repo's `deploy/` directory. Get them onto the server **once** — this command runs from **your local machine**, not the VPS:
+
+```bash
+# from your local machine, in the repo root:
+scp -r deploy deployer@<SERVER_IP>:/opt/church-website/
+```
+
+This places the templates at `/opt/church-website/deploy/`, and every `cp` below assumes that path. If the folder isn't there yet, you'll get `cp: cannot stat '/opt/church-website/deploy/...'` — re-run the `scp` first.
+
+Private-repo alternative — clone on the server instead, then use `/opt/church-website/repo/deploy/...` as the source path:
+
+```bash
+git clone https://github.com/PaulLowrance/church_website.git /opt/church-website/repo
+```
+
+Your server-local secrets live **outside** this folder (`/opt/church-website/postgres/.env` and `/opt/church-website/server/appsettings.Production.json`), so re-running `scp` later to refresh templates is safe.
+
+### 1.6 PostgreSQL (Docker container)
 
 ```bash
 mkdir -p /opt/church-website/postgres
-cp /home/plowrance/church-website/deploy/postgres/docker-compose.yml /opt/church-website/postgres/
+cp /opt/church-website/deploy/postgres/docker-compose.yml /opt/church-website/postgres/
 
 # The DB password lives in a local .env next to the compose file (not in git)
 cat > /opt/church-website/postgres/.env <<'EOF'
@@ -87,12 +106,12 @@ docker exec church-website-postgres pg_dump -U church_website -d church_website 
 
 Add it to root's crontab (`crontab -e`): `30 3 * * * docker exec church-website-postgres pg_dump -U church_website -d church_website > /var/backups/church-website/$(date +\%F).sql`
 
-### 1.6 Application configuration
+### 1.7 Application configuration
 
 Copy the template to the deployed app directory. The pipeline **never overwrites** this file (rsync excludes `appsettings.Production.json`), so your secrets survive every deploy.
 
 ```bash
-cp /home/plowrance/church-website/deploy/appsettings.Production.json.example \
+cp /opt/church-website/deploy/appsettings.Production.json.example \
    /opt/church-website/server/appsettings.Production.json
 chown deployer:deployer /opt/church-website/server/appsettings.Production.json
 chmod 600 /opt/church-website/server/appsettings.Production.json
@@ -100,13 +119,13 @@ chmod 600 /opt/church-website/server/appsettings.Production.json
 
 Edit it and set real values:
 
-- `ConnectionStrings:DefaultConnection` — the Postgres password from the `.env` in 1.5
+- `ConnectionStrings:DefaultConnection` — the Postgres password from the `.env` in 1.6
 - `Jwt:Key` — a long random string (e.g. `openssl rand -base64 48`)
-- `AssemblyAI:ApiKey` — real key (or supply via `/etc/church-website/api.env` instead; see 1.7)
+- `AssemblyAI:ApiKey` — real key (or supply via `/etc/church-website/api.env` instead; see 1.8)
 - `Podcast:BaseUrl` — the dev domain, e.g. `https://dev.bhpbc.org`
 - `Storage:*Path` — leave the `/opt/church-website/storage/...` absolute paths as-is
 
-### 1.7 (Optional) Secrets via environment file
+### 1.8 (Optional) Secrets via environment file
 
 If you prefer to keep the AssemblyAI key out of the config file entirely, create `/etc/church-website/api.env`:
 
@@ -118,12 +137,12 @@ EOF
 chmod 600 /etc/church-website/api.env
 ```
 
-Then uncomment `EnvironmentFile=/etc/church-website/api.env` in the systemd unit (section 1.8).
+Then uncomment `EnvironmentFile=/etc/church-website/api.env` in the systemd unit (section 1.9).
 
-### 1.8 systemd service
+### 1.9 systemd service
 
 ```bash
-cp /home/plowrance/church-website/deploy/systemd/church-website-api.service /etc/systemd/system/
+cp /opt/church-website/deploy/systemd/church-website-api.service /etc/systemd/system/
 systemctl daemon-reload
 systemctl enable church-website-api   # enable now; the binary arrives on first deploy
 ```
@@ -134,10 +153,10 @@ The first deploy rsyncs the API binary into `/opt/church-website/server/` and th
 journalctl -u church-website-api -f
 ```
 
-### 1.9 nginx
+### 1.10 nginx
 
 ```bash
-cp /home/plowrance/church-website/deploy/nginx/church-website.conf /etc/nginx/sites-available/church-website
+cp /opt/church-website/deploy/nginx/church-website.conf /etc/nginx/sites-available/church-website
 ln -s /etc/nginx/sites-available/church-website /etc/nginx/sites-enabled/church-website
 rm -f /etc/nginx/sites-enabled/default
 nginx -t
@@ -147,7 +166,7 @@ systemctl reload nginx
 
 Edit `/etc/nginx/sites-available/church-website` first if your dev domain differs from `dev.bhpbc.org`.
 
-### 1.10 Firewall
+### 1.11 Firewall
 
 ```bash
 ufw allow OpenSSH
@@ -217,4 +236,4 @@ journalctl -u church-website-api -n 50
   UPDATE users SET password_hash = crypt('NEW_STRONG_PASSWORD', gen_salt('bf')) WHERE username = 'admin';
   ```
   (requires `CREATE EXTENSION pgcrypto;` if not already available)
-- Keep the `pg_dump` backup cron from section 1.5 running, and periodically test a restore.
+- Keep the `pg_dump` backup cron from section 1.6 running, and periodically test a restore.

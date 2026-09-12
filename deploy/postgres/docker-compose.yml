@@ -5,7 +5,7 @@
 # Only Postgres runs in a container on the server; the API and nginx run natively.
 #
 # Data lives in the named volume `church_website_pgdata` (persists across
-# container upgrades). Back it up with pg_dump — see DEPLOYMENT.md section 1.5.
+# container upgrades). Back it up with pg_dump — see DEPLOYMENT.md section 1.6.
 #
 # Bound to 127.0.0.1 only so other apps on this shared VPS never see it.
 
