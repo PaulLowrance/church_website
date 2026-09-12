@@ -1,0 +1,23 @@
+[Unit]
+Description=Church Website API
+Wants=network-online.target postgresql.service
+After=network-online.target postgresql.service
+
+[Service]
+Type=simple
+User=deployer
+Group=deployer
+WorkingDirectory=/opt/church-website/server
+ExecStart=/opt/church-website/server/ChurchWebsite.Api
+Restart=on-failure
+RestartSec=5
+KillSignal=SIGINT
+TimeoutStopSec=30
+# Load secrets (AssemblyAI key etc.) without baking them into the repo.
+# Uncomment once /etc/church-website/api.env exists:
+# EnvironmentFile=/etc/church-website/api.env
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ASPNETCORE_URLS=http://127.0.0.1:5001
+
+[Install]
+WantedBy=multi-user.target

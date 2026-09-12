@@ -1,0 +1,120 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['**.md']
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment to deploy to
+        type: choice
+        required: true
+        default: dev
+        options:
+          - dev
+          - prod
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Publish API (self-contained linux-x64)
+        run: dotnet publish server/src/ChurchWebsite.Api -c Release -r linux-x64 --self-contained true -o artifact/server
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Build frontend
+        run: |
+          cd app
+          npm ci
+          npm run build
+
+      - name: Upload server artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: server
+          path: artifact/server
+
+      - name: Upload frontend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend
+          path: app/dist
+
+  deploy-dev:
+    name: Deploy to dev
+    needs: build
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev')
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: server
+          path: artifact/server
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: frontend
+          path: artifact/frontend
+
+      - name: Deploy to dev server
+        uses: ./.github/actions/deploy
+        with:
+          host: ${{ secrets.HOST }}
+          ssh-user: ${{ secrets.SSH_USER }}
+          ssh-port: ${{ secrets.SSH_PORT }}
+          ssh-key: ${{ secrets.SSH_KEY }}
+          server-path: /opt/church-website/server
+          frontend-path: /opt/church-website/app
+          storage-path: /opt/church-website/storage
+
+  deploy-prod:
+    name: Deploy to production
+    needs: build
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod'
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: server
+          path: artifact/server
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: frontend
+          path: artifact/frontend
+
+      - name: Deploy to production server
+        uses: ./.github/actions/deploy
+        with:
+          host: ${{ secrets.HOST }}
+          ssh-user: ${{ secrets.SSH_USER }}
+          ssh-port: ${{ secrets.SSH_PORT }}
+          ssh-key: ${{ secrets.SSH_KEY }}
+          server-path: /opt/church-website/server
+          frontend-path: /opt/church-website/app
+          storage-path: /opt/church-website/storage

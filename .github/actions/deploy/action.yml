@@ -1,0 +1,93 @@
+name: Deploy to server
+description: Rsync built artifacts to a VPS and restart the API service
+
+inputs:
+  host:
+    description: Server hostname or IP
+    required: true
+  ssh-user:
+    description: SSH user (e.g. deployer)
+    required: true
+  ssh-port:
+    description: SSH port
+    required: false
+    default: '22'
+  ssh-key:
+    description: Private SSH key used to authenticate to the server
+    required: true
+  server-path:
+    description: Remote directory for the published .NET app (rsynced with --delete)
+    required: true
+  frontend-path:
+    description: Remote directory for the static frontend (rsynced with --delete)
+    required: true
+  storage-path:
+    description: Remote directory for persistent uploads (never rsynced)
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Write SSH key
+      shell: bash
+      env:
+        SSH_KEY: ${{ inputs.ssh-key }}
+      run: |
+        install -d -m 700 "$HOME/.ssh"
+        printf '%s\n' "$SSH_KEY" > "$HOME/.ssh/deploy_key"
+        chmod 600 "$HOME/.ssh/deploy_key"
+        chmod 700 "$HOME/.ssh"
+
+    - name: Add host to known_hosts
+      shell: bash
+      run: |
+        ssh-keyscan -p ${{ inputs.ssh-port }} ${{ inputs.host }} >> "$HOME/.ssh/known_hosts" 2>/dev/null
+
+    - name: Rsync server app
+      shell: bash
+      run: |
+        rsync -az --delete \
+          --exclude='appsettings.Production.json' \
+          --exclude='appsettings.Production.*' \
+          -e "ssh -i $HOME/.ssh/deploy_key -p ${{ inputs.ssh-port }} -o StrictHostKeyChecking=accept-new" \
+          "$GITHUB_WORKSPACE/artifact/server/" \
+          ${{ inputs.ssh-user }}@${{ inputs.host }}:${{ inputs.server-path }}/
+
+    - name: Rsync frontend
+      shell: bash
+      run: |
+        rsync -az --delete \
+          -e "ssh -i $HOME/.ssh/deploy_key -p ${{ inputs.ssh-port }} -o StrictHostKeyChecking=accept-new" \
+          "$GITHUB_WORKSPACE/artifact/frontend/" \
+          ${{ inputs.ssh-user }}@${{ inputs.host }}:${{ inputs.frontend-path }}/
+
+    - name: Seed default branding assets
+      shell: bash
+      run: |
+        for f in bhpbc-sermon-placeholder.svg bhpbc-header-footer.svg; do
+          src="$GITHUB_WORKSPACE/server/src/ChurchWebsite.Api/uploads/images/$f"
+          if [ -f "$src" ]; then
+            ssh -i "$HOME/.ssh/deploy_key" -p ${{ inputs.ssh-port }} -o StrictHostKeyChecking=accept-new \
+              ${{ inputs.ssh-user }}@${{ inputs.host }} \
+              "mkdir -p ${{ inputs.storage-path }}/images && test -f ${{ inputs.storage-path }}/images/$f" \
+              || scp -q -i "$HOME/.ssh/deploy_key" -P ${{ inputs.ssh-port }} \
+                   "$src" \
+                   ${{ inputs.ssh-user }}@${{ inputs.host }}:${{ inputs.storage-path }}/images/
+          fi
+        done
+
+    - name: Restart API service
+      shell: bash
+      run: |
+        ssh -i "$HOME/.ssh/deploy_key" -p ${{ inputs.ssh-port }} -o StrictHostKeyChecking=accept-new \
+          ${{ inputs.ssh-user }}@${{ inputs.host }} \
+          'sudo systemctl restart church-website-api'
+
+    - name: Health check
+      shell: bash
+      run: |
+        sleep 5
+        ssh -i "$HOME/.ssh/deploy_key" -p ${{ inputs.ssh-port }} -o StrictHostKeyChecking=accept-new \
+          ${{ inputs.ssh-user }}@${{ inputs.host }} \
+          'curl -sf --max-time 20 http://127.0.0.1:5001/api/site-info' \
+          || echo "::warning::API health check failed (check service logs on server)"
