@@ -1,0 +1,25 @@
+[Unit]
+Description=Church Website API
+# Postgres runs in a Docker container (see deploy/postgres/docker-compose.yml);
+# its `restart: unless-stopped` policy brings it up once docker is running.
+Wants=network-online.target docker.service
+After=network-online.target docker.service
+
+[Service]
+Type=simple
+User=deployer
+Group=deployer
+WorkingDirectory=/opt/church-website/server
+ExecStart=/opt/church-website/server/ChurchWebsite.Api
+Restart=on-failure
+RestartSec=5
+KillSignal=SIGINT
+TimeoutStopSec=30
+# Load secrets (AssemblyAI key etc.) without baking them into the repo.
+# Uncomment once /etc/church-website/api.env exists:
+# EnvironmentFile=/etc/church-website/api.env
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ASPNETCORE_URLS=http://127.0.0.1:5001
+
+[Install]
+WantedBy=multi-user.target

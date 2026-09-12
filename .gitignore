@@ -22,4 +22,8 @@ app/dist/
 *.log
 
 # Uploaded media (audio files, images, etc.)
-**/uploads/
+**/uploads/*
+!**/uploads/images/
+**/uploads/images/*
+!**/uploads/images/bhpbc-sermon-placeholder.svg
+!**/uploads/images/bhpbc-header-footer.svg

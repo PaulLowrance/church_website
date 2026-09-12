@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Brand Paper Background (#fbf8f3) -->
+  <rect width="1024" height="1024" fill="#fbf8f3"/>
+  
+  <!-- Subtle Burgundy Frame (#6f2e2a) -->
+  <rect x="32" y="32" width="960" height="960" fill="none" stroke="#6f2e2a" stroke-width="8" opacity="0.3"/>
+  <rect x="48" y="48" width="928" height="928" fill="none" stroke="#6f2e2a" stroke-width="2" opacity="0.2"/>
+
+  <!-- Centered Bread, Wine & Bible Symbol Group -->
+  <g transform="translate(362, 150)">
+    <!-- Open Bible Base (Taupe #b08a7c) -->
+    <path d="M 20,180 Q 150,150 280,180 L 280,210 Q 150,180 20,210 Z" fill="#b08a7c" opacity="0.85"/>
+    <path d="M 150,162 L 150,200" stroke="#fbf8f3" stroke-width="3" fill="none"/>
+
+    <!-- Bread Loaf (Left of Chalice, Taupe #b08a7c) -->
+    <path d="M 30,140 Q 80,95 130,140 C 140,160 20,160 30,140 Z" fill="#b08a7c"/>
+    <path d="M 55,128 Q 65,118 75,132" stroke="#fbf8f3" stroke-width="3" fill="none"/>
+    <path d="M 85,122 Q 95,112 105,128" stroke="#fbf8f3" stroke-width="3" fill="none"/>
+
+    <!-- Stemmed Communion Chalice (Burgundy Accent #6f2e2a) -->
+    <!-- Chalice Bowl -->
+    <path d="M 160,40 L 240,40 C 240,90 215,110 200,110 C 185,110 160,90 160,40 Z" fill="#6f2e2a"/>
+    <!-- Chalice Rim / Surface Accent -->
+    <ellipse cx="200" cy="40" rx="40" ry="8" fill="#b08a7c"/>
+    <!-- Chalice Stem & Knop -->
+    <rect x="195" y="110" width="10" height="40" fill="#6f2e2a"/>
+    <circle cx="200" cy="128" r="9" fill="#6f2e2a"/>
+    <!-- Chalice Base / Foot -->
+    <path d="M 170,162 L 230,162 L 220,150 L 180,150 Z" fill="#6f2e2a"/>
+  </g>
+
+  <!-- Dynamic Text Content -->
+  <text x="512" y="480" 
+        font-family="Georgia, serif" 
+        font-size="48" 
+        font-weight="bold" 
+        fill="#6f2e2a" 
+        text-anchor="middle">The Lord Knows Your Name</text>
+
+  <text x="512" y="550" 
+        font-family="'Helvetica Neue', Arial, sans-serif"
+        font-size="28" 
+        fill="#b08a7c" 
+        text-anchor="middle">Bro Jeff Lindsey • Date</text>
+
+  <text x="512" y="820" 
+        font-family="Georgia, serif" 
+        font-size="20" 
+        letter-spacing="2" 
+        fill="#1c1a17" 
+        text-anchor="middle">BRENTWOOD HILLS PRIMITIVE BAPTIST CHURCH</text>
+</svg>
