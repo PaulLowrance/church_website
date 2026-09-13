@@ -30,7 +30,7 @@ public class AssemblyAITranscriptionService(
     private string SummaryPrompt => configuration["AssemblyAI:SummaryPrompt"]
         ?? "Write a concise, reverent 2-4 sentence summary of this sermon transcript for a church podcast episode description. Reflect the main theme and any key scripture references. Plain prose, no markdown.";
 
-    private int MaxSummaryTokens => int.TryParse(configuration["AssemblyAI:MaxSummaryTokens"], out var tokens) ? tokens : 500;
+    private int MaxSummaryTokens => int.TryParse(configuration["AssemblyAI:MaxSummaryTokens"], out var tokens) ? tokens : 2000;
 
     public async Task<string> SubmitAsync(string audioFilePath, CancellationToken ct = default)
     {
@@ -105,18 +105,97 @@ public class AssemblyAITranscriptionService(
         using var client = CreateClient();
         using var response = await client.PostAsJsonAsync($"{LlmGatewayUrl}/v1/chat/completions", payload, ct);
 
+        var body = await response.Content.ReadAsStringAsync(ct);
+
         if (!response.IsSuccessStatusCode)
         {
-            var body = await response.Content.ReadAsStringAsync(ct);
             logger.LogError("LLM Gateway summarization failed with HTTP {StatusCode}: {Body}",
                 (int)response.StatusCode, body);
             throw new InvalidOperationException($"LLM Gateway summarization failed with HTTP {(int)response.StatusCode}.");
         }
 
-        var result = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: ct);
-        var content = result.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString();
+        JsonElement result;
+        try
+        {
+            result = JsonDocument.Parse(body).RootElement;
+        }
+        catch (JsonException ex)
+        {
+            logger.LogError(ex, "LLM Gateway returned unparseable JSON: {Body}", Truncate(body));
+            throw new InvalidOperationException("LLM Gateway returned an invalid response.", ex);
+        }
 
-        return content?.Trim() ?? string.Empty;
+        var requestId = result.TryGetProperty("request_id", out var rid) ? rid.GetString() : null;
+
+        if (!result.TryGetProperty("choices", out var choices) || choices.GetArrayLength() == 0)
+        {
+            logger.LogError("LLM Gateway returned no choices (request_id {RequestId}): {Body}", requestId, Truncate(body));
+            throw new InvalidOperationException("LLM Gateway returned an invalid response.");
+        }
+
+        var choice = choices[0];
+        var finishReason = choice.TryGetProperty("finish_reason", out var fr) ? fr.GetString() : null;
+        var message = choice.TryGetProperty("message", out var m) ? m : default;
+
+        var content = ExtractContent(message);
+        if (!string.IsNullOrWhiteSpace(content))
+        {
+            return content.Trim();
+        }
+
+        logger.LogWarning(
+            "LLM Gateway returned empty content (request_id {RequestId}, model {Model}, finish_reason {FinishReason}): {Body}",
+            requestId, LlmModel, finishReason, Truncate(body));
+        return string.Empty;
+    }
+
+    private static string? ExtractContent(JsonElement message)
+    {
+        if (message.ValueKind != JsonValueKind.Object ||
+            !message.TryGetProperty("content", out var content) ||
+            content.ValueKind == JsonValueKind.Null)
+        {
+            return null;
+        }
+
+        if (content.ValueKind == JsonValueKind.String)
+        {
+            var text = content.GetString();
+            if (!string.IsNullOrWhiteSpace(text))
+            {
+                return text;
+            }
+        }
+
+        // Newer API shapes may return content as a list of content parts.
+        if (content.ValueKind == JsonValueKind.Array)
+        {
+            var sb = new StringBuilder();
+            foreach (var part in content.EnumerateArray())
+            {
+                if (part.ValueKind == JsonValueKind.String)
+                {
+                    sb.Append(part.GetString());
+                }
+                else if (part.TryGetProperty("text", out var text) && text.ValueKind == JsonValueKind.String)
+                {
+                    sb.Append(text.GetString());
+                }
+            }
+
+            var joined = sb.ToString();
+            if (!string.IsNullOrWhiteSpace(joined))
+            {
+                return joined;
+            }
+        }
+
+        return null;
+    }
+
+    private static string Truncate(string value, int maxLength = 4000)
+    {
+        return value.Length <= maxLength ? value : value[..maxLength] + "...(truncated)";
     }
 
     private async Task<string> UploadFileAsync(string audioFilePath, CancellationToken ct)
