@@ -30,7 +30,7 @@ systemctl enable --now docker
 
 ### 1.3 GitHub Actions SSH access
 
-Create a dedicated keypair for the pipeline. **Do not use the deployer user's personal key.**
+Create a dedicated keypair for the pipeline. **Do not use the deployer user's personal key.** The private key **must have an empty passphrase** — GitHub Actions is non-interactive, so a passphrase-protected key fails with `Permission denied (publickey)`.
 
 ```bash
 sudo -u deployer mkdir -p /home/deployer/.ssh
@@ -38,6 +38,12 @@ sudo -u deployer ssh-keygen -t ed25519 -f /home/deployer/.ssh/github-actions -N 
 sudo -u deployer bash -c 'cat /home/deployer/.ssh/github-actions.pub >> /home/deployer/.ssh/authorized_keys'
 chmod 700 /home/deployer/.ssh
 chmod 600 /home/deployer/.ssh/authorized_keys /home/deployer/.ssh/github-actions
+```
+
+Verify it connects without prompting for a passphrase:
+
+```bash
+sudo -u deployer ssh -i /home/deployer/.ssh/github-actions -o BatchMode=yes deployer@localhost true
 ```
 
 Copy the **private** key (`/home/deployer/.ssh/github-actions`) into the GitHub Actions secret later (see section 2).
@@ -223,6 +229,23 @@ curl -s http://dev.bhpbc.org/podcast/rss | head -n 5
 curl -sI http://dev.bhpbc.org/ | head -n 5
 journalctl -u church-website-api -n 50
 ```
+
+## 4.1 Troubleshooting
+
+- **`status=203/EXEC` / `Permission denied` spawning `/opt/church-website/server/ChurchWebsite.Api`** — the binary was deployed without the execute bit (GitHub artifact zips don't preserve it). Fix and restart:
+  ```bash
+  sudo chmod +x /opt/church-website/server/ChurchWebsite.Api
+  sudo systemctl restart church-website-api
+  ```
+  The pipeline now applies `chmod +x` before rsyncing, so this self-corrects on the next deploy.
+- **`System.UnauthorizedAccessException: ... appsettings.Production.json` / `Permission denied` at startup** — the config file was created as root and the service (running as `deployer`) can't read it. Fix:
+  ```bash
+  sudo chown deployer:deployer /opt/church-website/server/appsettings.Production.json
+  sudo chmod 600 /opt/church-website/server/appsettings.Production.json
+  sudo systemctl restart church-website-api
+  ```
+- **`JWT Key not configured` or `Connection string ... not found` on startup** — `appsettings.Production.json` wasn't created or is missing the `Jwt:Key` / connection string values. Check section 1.7.
+- **API can't reach Postgres** — confirm the container is up: `docker compose -f /opt/church-website/postgres/docker-compose.yml ps`, and that `ConnectionStrings:DefaultConnection` matches the password in `/opt/church-website/postgres/.env`.
 
 ## 5. Production notes (when you get there)
 

@@ -43,6 +43,10 @@ runs:
       run: |
         ssh-keyscan -p ${{ inputs.ssh-port }} ${{ inputs.host }} >> "$HOME/.ssh/known_hosts" 2>/dev/null
 
+    - name: Ensure API binary is executable
+      shell: bash
+      run: chmod +x "$GITHUB_WORKSPACE/artifact/server/ChurchWebsite.Api"
+
     - name: Rsync server app
       shell: bash
       run: |
@@ -89,5 +93,4 @@ runs:
         sleep 5
         ssh -i "$HOME/.ssh/deploy_key" -p ${{ inputs.ssh-port }} -o StrictHostKeyChecking=accept-new \
           ${{ inputs.ssh-user }}@${{ inputs.host }} \
-          'curl -sf --max-time 20 http://127.0.0.1:5001/api/site-info' \
-          || echo "::warning::API health check failed (check service logs on server)"
+          'curl -sf --retry 5 --retry-delay 3 --retry-all-errors --max-time 20 http://127.0.0.1:5001/api/site-info'
