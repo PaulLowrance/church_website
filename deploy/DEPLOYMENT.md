@@ -230,6 +230,17 @@ curl -sI http://dev.bhpbc.org/ | head -n 5
 journalctl -u church-website-api -n 50
 ```
 
+## 4.1 Troubleshooting
+
+- **`status=203/EXEC` / `Permission denied` spawning `/opt/church-website/server/ChurchWebsite.Api`** — the binary was deployed without the execute bit (GitHub artifact zips don't preserve it). Fix and restart:
+  ```bash
+  sudo chmod +x /opt/church-website/server/ChurchWebsite.Api
+  sudo systemctl restart church-website-api
+  ```
+  The pipeline now applies `chmod +x` before rsyncing, so this self-corrects on the next deploy.
+- **`JWT Key not configured` or `Connection string ... not found` on startup** — `appsettings.Production.json` wasn't created or is missing the `Jwt:Key` / connection string values. Check section 1.7.
+- **API can't reach Postgres** — confirm the container is up: `docker compose -f /opt/church-website/postgres/docker-compose.yml ps`, and that `ConnectionStrings:DefaultConnection` matches the password in `/opt/church-website/postgres/.env`.
+
 ## 5. Production notes (when you get there)
 
 - Repeat section 1 on the prod VPS, using the prod domain in nginx and `Podcast:BaseUrl`.
