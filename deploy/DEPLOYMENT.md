@@ -238,6 +238,12 @@ journalctl -u church-website-api -n 50
   sudo systemctl restart church-website-api
   ```
   The pipeline now applies `chmod +x` before rsyncing, so this self-corrects on the next deploy.
+- **`System.UnauthorizedAccessException: ... appsettings.Production.json` / `Permission denied` at startup** — the config file was created as root and the service (running as `deployer`) can't read it. Fix:
+  ```bash
+  sudo chown deployer:deployer /opt/church-website/server/appsettings.Production.json
+  sudo chmod 600 /opt/church-website/server/appsettings.Production.json
+  sudo systemctl restart church-website-api
+  ```
 - **`JWT Key not configured` or `Connection string ... not found` on startup** — `appsettings.Production.json` wasn't created or is missing the `Jwt:Key` / connection string values. Check section 1.7.
 - **API can't reach Postgres** — confirm the container is up: `docker compose -f /opt/church-website/postgres/docker-compose.yml ps`, and that `ConnectionStrings:DefaultConnection` matches the password in `/opt/church-website/postgres/.env`.
 
