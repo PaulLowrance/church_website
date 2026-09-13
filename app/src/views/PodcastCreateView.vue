@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import apiClient from '@/api/client'
+import { toLocalDateTimeInputValue } from '@/utils/datetime'
 
 const router = useRouter()
 
@@ -11,7 +12,7 @@ const speakerName = ref('')
 const description = ref('')
 const scripture = ref('')
 const seriesName = ref('')
-const publishedAt = ref(new Date().toISOString().slice(0, 16))
+const publishedAt = ref(toLocalDateTimeInputValue(new Date()))
 const tags = ref('')
 const audioFile = ref<File | null>(null)
 const coverImageFile = ref<File | null>(null)
