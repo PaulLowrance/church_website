@@ -57,8 +57,8 @@ public static class PodcastEpisodeMapper
             CoverImageUrl = coverImageUrl,
             AudioFileSize = episode.AudioFileSize,
             AudioContentType = episode.AudioContentType,
-            PublishedAt = episode.PublishedAt,
-            CreatedAt = episode.CreatedAt,
+            PublishedAt = ToUtc(episode.PublishedAt),
+            CreatedAt = ToUtc(episode.CreatedAt),
             TranscriptStatus = episode.TranscriptStatus,
             TranscriptUrl = episode.TranscriptStatus == "completed" && !string.IsNullOrWhiteSpace(episode.TranscriptFilePath)
                 ? fileStorage.GetTranscriptPublicUrl(episode.TranscriptFilePath)
@@ -69,6 +69,17 @@ public static class PodcastEpisodeMapper
             Tags = episode.Tags
         };
     }
+
+    /// <summary>
+    /// Normalizes a <see cref="DateTime"/> to UTC so it serializes with a <c>Z</c>
+    /// suffix regardless of what <c>Kind</c> Npgsql returned.
+    /// </summary>
+    public static DateTime ToUtc(DateTime value) => value.Kind switch
+    {
+        DateTimeKind.Utc => value,
+        DateTimeKind.Local => value.ToUniversalTime(),
+        _ => DateTime.SpecifyKind(value, DateTimeKind.Utc)
+    };
 
     private static string ResolveCoverImageUrl(
         PodcastEpisode episode,

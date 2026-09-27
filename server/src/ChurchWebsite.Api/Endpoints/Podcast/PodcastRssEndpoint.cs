@@ -66,7 +66,7 @@ public class PodcastRssEndpoint(IPodcastEpisodeRepository repo, IFileStorageServ
 
                     var item = new XElement("item",
                         new XElement("title", episode.Title),
-                        new XElement("pubDate", episode.PublishedAt.ToString("r")),
+                        new XElement("pubDate", PodcastEpisodeMapper.ToUtc(episode.PublishedAt).ToString("r")),
                         new XElement("guid", $"{baseUrl.TrimEnd('/')}/podcast/episodes/{episode.Id}"),
                         new XElement("description", itemDescription),
                         new XElement("{http://www.itunes.com/dtds/podcast-1.0.dtd}author", author),

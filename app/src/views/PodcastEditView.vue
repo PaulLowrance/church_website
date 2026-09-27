@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import apiClient from '@/api/client'
+import { toLocalDateTimeInputValue } from '@/utils/datetime'
 
 const router = useRouter()
 const route = useRoute()
@@ -126,7 +127,7 @@ onMounted(async () => {
     description.value = episode.description || ''
     scripture.value = episode.scripture || ''
     seriesName.value = episode.seriesName || ''
-    publishedAt.value = new Date(episode.publishedAt).toISOString().slice(0, 16)
+    publishedAt.value = toLocalDateTimeInputValue(new Date(episode.publishedAt))
     tags.value = episode.tags.join(', ')
     currentAudioUrl.value = episode.audioUrl
     currentCoverImageUrl.value = episode.coverImageUrl || ''
